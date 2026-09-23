@@ -57,7 +57,58 @@ Collected information is organized into a structured clinical history that can b
 
 ---
 
+
 ---
+
+## ⚙️ Key Features
+
+- 🧑‍⚕️ Patient and medical-staff workflows
+- 📝 Digital patient registration
+- 🪪 ABHA ID-based patient lookup flow
+- 🗣️ Guided clinical history-taking
+- 🧠 Adaptive questions based on the selected complaint
+- 🚨 Red-flag symptom identification
+- 📄 Structured clinical history summary
+- 📋 Prior medical document / investigation workflow
+- 🌿 AYUSH assessment support
+- 🏥 OPD consultation and priority-routing workflow
+- 💾 Prototype local data storage and mock backend
+
+---
+
+## 🛠️ Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| HTML5 | Application structure |
+| CSS3 | User interface and responsive styling |
+| JavaScript | Application logic and workflow |
+| Local Storage | Prototype data persistence |
+| GitHub Pages | Prototype deployment |
+
+---
+
+## 🔄 Patient Workflow
+
+```text
+Patient Registration
+        ↓
+Identify / ABHA Lookup
+        ↓
+Chief Complaint
+        ↓
+Adaptive History Taking
+        ↓
+Medical Information & AYUSH Assessment
+        ↓
+Structured Summary
+        ↓
+Priority / Routing
+        ↓
+Doctor Consultation
+
+---
+```
 
 ## 🎯 Problem
 
@@ -181,68 +232,6 @@ Collected information is organized into a structured summary containing sections
 
 ---
 
-🔄 Patient Workflow
-
-
-Patient
-   ↓
-Basic Information
-   ↓
-Chief Complaint
-   ↓
-Adaptive Questions
-   ↓
-Medical History
-   ↓
-Drug & Allergy History
-   ↓
-Family / Personal History
-   ↓
-Review of Systems
-   ↓
-AYUSH Assessment
-   ↓
-Prior Medical Information
-   ↓
-Red-Flag Checks
-   ↓
-Structured Clinical Summary
-   ↓
-Doctor Review
-
-
-➡️Doctor WorkFlow
-
-Doctor Login
-     ↓
-Patient Queue
-     ↓
-Select Patient
-     ↓
-Review Structured History
-     ↓
-Review Previous Information
-     ↓
-Review Clinical Flags
-     ↓
-Begin Consultation
-
-🛠️ Technology Stack
-
-Frontend
-HTML5
-CSS3
-JavaScript
-
-Prototype Data Layer
-JavaScript-based mock API layer
-LocalStorage-based prototype database
-
-Prototype Logic
-Complaint-specific adaptive questioning
-Rule-based red-flag detection
-Structured clinical-summary generation
-Demonstration document-information extraction
 
 
 🏗️ Prototype Architecture
