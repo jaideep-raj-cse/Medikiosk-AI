@@ -270,41 +270,40 @@ It does not provide medical diagnosis or replace a qualified healthcare professi
 
 ---
 
+---
 
+## 🏗️ Prototype Architecture
 
-🏗️ Prototype Architecture
-
-                 ┌─────────────────────┐
-                 │       Patient       │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │   MediKiosk UI     │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-              ┌──────────────────────────┐
-              │ Adaptive History Engine  │
-              └────────────┬─────────────┘
-                           │
-             ┌─────────────┼─────────────┐
-             ▼             ▼             ▼
-       Medical History  AYUSH       Prior Records
-             │             │             │
-             └─────────────┼─────────────┘
-                           ▼
-                 ┌─────────────────────┐
-                 │  Clinical Rules    │
-                 │  & Red-Flag Checks │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Structured Summary  │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                    ┌──────────────┐
-                    │    Doctor    │
-                    └──────────────┘
+```text
+                    ┌─────────────────────┐
+                    │     Patient /       │
+                    │      Staff          │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   MediKiosk UI      │
+                    │  HTML + CSS + JS    │
+                    └──────────┬──────────┘
+                               │
+             ┌─────────────────┼─────────────────┐
+             │                 │                 │
+             ▼                 ▼                 ▼
+      Patient Intake     History Engine     Document Flow
+             │                 │                 │
+             ▼                 ▼                 ▼
+      Patient Data       Adaptive Q&A      Prior Records
+             │                 │                 │
+             └─────────────────┼─────────────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ Structured Clinical │
+                    │      Summary        │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ OPD / Doctor        │
+                    │ Consultation       │
+                    └─────────────────────┘
