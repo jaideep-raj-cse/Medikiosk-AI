@@ -14,6 +14,49 @@ The system guides patients through an adaptive history-taking workflow and prese
 
 **[View Source Code →](https://github.com/jaideep-raj-cse/Medikiosk-AI)**
 
+
+---
+
+## 📸 Prototype Screens
+
+### 1. Landing Page
+
+The MediKiosk landing page introduces the problem and provides separate entry points for patients and medical staff.
+
+![MediKiosk Landing Page](screenshots/01-homepage.png)
+
+### 2. Patient Registration
+
+Patients can register by entering basic information such as name, age, gender, phone number and optional ABHA ID.
+
+![Patient Registration](screenshots/02-patient-registration.png)
+
+### 3. Existing Patient / ABHA Flow
+
+Returning patients can use their ABHA ID to load their existing profile and continue the consultation workflow.
+
+![Existing Patient Flow](screenshots/03-existing-patient.png)
+
+### 4. Chief Complaint Selection
+
+The system allows patients to select their primary health concern before beginning the adaptive history-taking process.
+
+![Chief Complaint Selection](screenshots/04-chief-complaint.png)
+
+### 5. Adaptive History Taking
+
+The prototype asks follow-up questions based on the patient's selected complaint, helping collect a more structured clinical history.
+
+![Adaptive Questioning](screenshots/05-adaptive-questioning.png)
+
+### 6. Structured Clinical Summary
+
+Collected information is organized into a structured clinical history that can be reviewed before consultation.
+
+![Clinical History Summary](screenshots/06-history-summary.png)
+
+---
+
 ---
 
 ## 🎯 Problem
