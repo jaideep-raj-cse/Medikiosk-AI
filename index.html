@@ -1,0 +1,2895 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediKiosk — the history gets taken before the doctor does</title>
+<meta name="description" content="MediKiosk captures a patient's clinical history and prior records before consultation, so a 3-minute OPD visit can spend its time on examination, not data entry.">
+<style>
+/*
+  MediKiosk — design system
+  ---------------------------------------------------------
+  Grounded in the subject matter: a self-service clinical
+  history kiosk for crowded Indian OPDs, used by first-visit,
+  elderly, low-literacy and multilingual patients, and read
+  by doctors in seconds. Visual language borrows from two
+  real objects: the ruled paper case-sheet doctors write on,
+  and the large-target, icon-first kiosk screen (ATM / airport
+  check-in) patients tap through.
+  Palette
+    --paper   #F3F5F1  sage-white, like case-sheet paper
+    --ink     #16221F  deep teal-charcoal text
+    --teal    #0E6B57  clinical trust colour, primary action
+    --ochre   #C17A2E  patient-facing accent (kiosk warmth)
+    --rule    #CBD6C7  hairline / paper rule colour
+    --alert   #A83A2C  reserved ONLY for red-flag emergencies
+    --paper-2 #EAEEE7  slightly deeper paper, panels
+  Type
+    UI + body: IBM Plex Sans (also ships Devanagari — the
+      product is bilingual, so this is a real constraint,
+      not decoration)
+    Data / IDs / timestamps: IBM Plex Mono, evokes a monitor
+      readout / stamped patient ID
+*/
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap');
+:root{
+  --paper:#F3F5F1;
+  --paper-2:#EAEEE7;
+  --ink:#16221F;
+  --ink-soft:#4A5750;
+  --teal:#0E6B57;
+  --teal-deep:#0A4F41;
+  --ochre:#C17A2E;
+  --ochre-deep:#9A5F1F;
+  --rule:#CBD6C7;
+  --rule-strong:#A9B8A4;
+  --alert:#A83A2C;
+  --alert-bg:#F7E4DF;
+  --focus:#1E5EFF;
+  --radius:2px;
+  --shadow:0 1px 0 rgba(22,34,31,.08);
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans','Noto Sans Devanagari',sans-serif;
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{
+  font-family:'IBM Plex Sans','Noto Sans Devanagari',sans-serif;
+  font-weight:600;
+  line-height:1.2;
+  margin:0 0 .5em;
+  letter-spacing:-.01em;
+}
+h1{font-size:clamp(2rem,4vw,3.25rem); font-weight:700;}
+h2{font-size:clamp(1.5rem,2.6vw,2.1rem);}
+h3{font-size:1.25rem;}
+p{margin:0 0 1em; max-width:38em; color:var(--ink-soft);}
+a{color:var(--teal-deep); text-decoration-line:underline; text-decoration-color:var(--rule-strong); text-underline-offset:.15em;}
+a:hover{text-decoration-color:currentColor;}
+.mono{font-family:'IBM Plex Mono',monospace; letter-spacing:.01em;}
+:focus-visible{outline:3px solid var(--focus); outline-offset:2px;}
+button{font-family:inherit; cursor:pointer;}
+/* ---------- layout shells ---------- */
+.wrap{max-width:1120px; margin:0 auto; padding:0 28px;}
+.wrap--narrow{max-width:720px;}
+.site-header{
+  border-bottom:1px solid var(--rule);
+  background:var(--paper);
+  position:sticky; top:0; z-index:20;
+}
+.site-header__row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; max-width:1120px; margin:0 auto;
+}
+.brand{display:flex; align-items:baseline; gap:.5em; text-decoration:none; color:var(--ink);}
+.brand__mark{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px; border:1.5px solid var(--ink); border-radius:50%;
+  font-family:'IBM Plex Mono',monospace; font-size:.72rem; font-weight:600;
+}
+.brand__name{font-weight:700; font-size:1.15rem; letter-spacing:-.01em;}
+.brand__name em{font-style:normal; color:var(--teal-deep);}
+.header-nav{display:flex; gap:22px; align-items:center;}
+.header-nav a{font-size:.95rem; text-decoration:none; color:var(--ink-soft);}
+.header-nav a:hover{color:var(--ink);}
+
+
+/* =========================================================
+   TECH STACK BUTTON
+   ========================================================= */
+
+.tech-stack-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+
+  padding:9px 14px;
+
+  border:1px solid var(--rule);
+  border-radius:8px;
+
+  background:var(--paper);
+  color:var(--ink);
+
+  font-family:inherit;
+  font-size:.88rem;
+  font-weight:600;
+
+  cursor:pointer;
+
+  transition:
+    background-color .15s ease,
+    border-color .15s ease,
+    color .15s ease,
+    transform .15s ease;
+}
+
+.tech-stack-btn:hover{
+  background:var(--paper-2);
+  border-color:var(--teal);
+  color:var(--teal-deep);
+  transform:translateY(-1px);
+}
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5em;
+  padding:14px 24px; font-size:1rem; font-weight:600;
+  border:1.5px solid var(--ink); border-radius:var(--radius);
+  background:transparent; color:var(--ink); text-decoration:none;
+  min-height:52px; transition:background-color .12s ease, color .12s ease, transform .05s ease;
+}
+.btn:active{transform:translateY(1px);}
+.btn--primary{background:var(--teal); border-color:var(--teal); color:#fff;}
+.btn--primary:hover{background:var(--teal-deep); border-color:var(--teal-deep);}
+.btn--patient{background:var(--ochre); border-color:var(--ochre); color:#fff;}
+.btn--patient:hover{background:var(--ochre-deep); border-color:var(--ochre-deep);}
+.btn--ghost{background:transparent; border-color:var(--rule-strong); color:var(--ink);}
+.btn--ghost:hover{border-color:var(--ink);}
+.btn--lg{padding:20px 30px; font-size:1.1rem; min-height:64px;}
+.btn--block{width:100%;}
+.btn[disabled]{opacity:.45; cursor:not-allowed;}
+/* ---------- stepper: the 5-step journey is a real sequence, so numbering is earned ---------- */
+.stepper{display:flex; list-style:none; margin:0 0 32px; padding:0; gap:0; flex-wrap:wrap;}
+.stepper li{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 18px 10px 0; font-size:.85rem; color:var(--ink-soft);
+  border-bottom:2px solid var(--rule); flex:1 1 auto; min-width:120px;
+}
+.stepper li .num{
+  font-family:'IBM Plex Mono',monospace; font-size:.75rem;
+  width:22px; height:22px; border-radius:50%; border:1.5px solid var(--rule-strong);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.stepper li.is-done{color:var(--teal-deep); border-color:var(--teal);}
+.stepper li.is-done .num{background:var(--teal); border-color:var(--teal); color:#fff;}
+.stepper li.is-current{color:var(--ink); font-weight:600; border-color:var(--ink);}
+.stepper li.is-current .num{border-color:var(--ink); background:var(--ink); color:var(--paper);}
+/* ---------- ruled paper panel: the case-sheet metaphor ---------- */
+.sheet{
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 35px,
+      var(--rule) 35px,
+      var(--rule) calc(35px + 1px)
+    );
+  border:1px solid var(--rule-strong);
+  padding:28px 30px;
+  position:relative;
+}
+.sheet::before{
+  content:"";
+  position:absolute; top:0; left:44px; bottom:0; width:1px;
+  background:var(--ochre); opacity:.35;
+}
+.sheet__label{
+  font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--ink-soft);
+  margin-bottom:6px; display:block;
+}
+.panel{
+  background:var(--paper-2);
+  border:1px solid var(--rule);
+  padding:24px;
+}
+.panel + .panel{margin-top:16px;}
+/* ---------- folder tabs (role select) ---------- */
+.tabs{display:flex; gap:0; border-bottom:1px solid var(--rule-strong); margin-bottom:24px;}
+.tabs button{
+  flex:1; padding:14px 18px; background:var(--paper-2);
+  border:1px solid var(--rule-strong); border-bottom:none;
+  font-weight:600; color:var(--ink-soft);
+  margin-right:-1px; position:relative; top:1px;
+  border-radius:6px 6px 0 0;
+}
+.tabs button.is-active{background:var(--paper); color:var(--ink); top:0; border-bottom:1px solid var(--paper); z-index:1;}
+/* ---------- form elements ---------- */
+.field{margin-bottom:20px;}
+.field label{display:block; font-weight:600; margin-bottom:6px; font-size:.95rem;}
+.field .hint{font-size:.82rem; color:var(--ink-soft); margin-top:4px;}
+.field input[type=text],
+.field input[type=email],
+.field input[type=password],
+.field input[type=tel],
+.field input[type=date],
+.field select,
+.field textarea{
+  width:100%; padding:13px 14px; font-size:1rem; font-family:inherit;
+  border:1.5px solid var(--rule-strong); border-radius:var(--radius);
+  background:#fff; color:var(--ink);
+}
+.field textarea{min-height:96px; resize:vertical;}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--ink);}
+.choice-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px;}
+.choice{
+  border:1.5px solid var(--rule-strong); background:#fff; border-radius:var(--radius);
+  padding:16px 12px; text-align:left; font-size:.95rem; font-weight:500;
+  min-height:64px; display:flex; align-items:center; gap:10px;
+}
+.choice:hover{border-color:var(--ink);}
+.choice.is-selected{border-color:var(--teal); background:#EAF4F1; box-shadow:inset 0 0 0 1px var(--teal);}
+.choice .ic{font-size:1.3rem; line-height:1;}
+.severity{display:flex; align-items:center; gap:4px; flex-wrap:wrap;}
+.severity button{
+  width:44px; height:44px; border-radius:50%; border:1.5px solid var(--rule-strong);
+  background:#fff; font-family:'IBM Plex Mono',monospace; font-weight:600;
+}
+.severity button.is-selected{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+/* voice / mic affordance */
+.mic-btn{
+  display:flex; align-items:center; justify-content:center;
+  width:88px; height:88px; border-radius:50%;
+  border:2px solid var(--teal); background:#fff; color:var(--teal);
+  font-size:1.8rem; margin:0 auto;
+}
+.mic-btn.is-listening{background:var(--teal); color:#fff; animation:pulse 1.4s ease-out infinite;}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(14,107,87,.35);}
+  100%{box-shadow:0 0 0 18px rgba(14,107,87,0);}
+}
+@media (prefers-reduced-motion: reduce){
+  .mic-btn.is-listening{animation:none;}
+}
+/* ---------- stamp / status badge — modelled on a physical case-sheet stamp ---------- */
+.stamp{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:'IBM Plex Mono',monospace; font-size:.72rem; font-weight:600;
+  letter-spacing:.03em; padding:5px 10px; border:1.5px solid currentColor;
+  border-radius:20px; transform:rotate(-1.5deg);
+}
+.stamp--pending{color:var(--ochre-deep);}
+.stamp--ready{color:var(--teal-deep);}
+.stamp--flag{color:var(--alert); background:var(--alert-bg); border-color:var(--alert); transform:rotate(-1.2deg);}
+.stamp--done{color:var(--ink-soft);}
+/* ---------- red-flag alert banner ---------- */
+.alert-banner{
+  background:var(--alert-bg); border:1.5px solid var(--alert); color:var(--alert);
+  padding:16px 18px; display:flex; gap:12px; align-items:flex-start; margin-bottom:20px;
+}
+.alert-banner strong{display:block; color:var(--alert); margin-bottom:2px;}
+.alert-banner p{color:var(--alert); margin:0; max-width:none;}
+/* ---------- timeline (document scan step) ---------- */
+.timeline{border-left:2px solid var(--rule-strong); margin-left:8px; padding-left:24px;}
+.timeline__item{position:relative; padding-bottom:22px;}
+.timeline__item::before{
+  content:""; position:absolute; left:-30px; top:4px;
+  width:10px; height:10px; border-radius:50%; background:var(--teal); border:2px solid var(--paper);
+}
+.timeline__date{font-family:'IBM Plex Mono',monospace; font-size:.78rem; color:var(--ink-soft);}
+.timeline__body{background:#fff; border:1px solid var(--rule); padding:14px 16px; margin-top:6px;}
+.abn{color:var(--alert); font-weight:600;}
+/* ---------- doctor queue table ---------- */
+.queue{width:100%; border-collapse:collapse;}
+.queue th{
+  text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.72rem;
+  text-transform:none; color:var(--ink-soft); font-weight:500;
+  border-bottom:1.5px solid var(--ink); padding:8px 12px;
+}
+.queue td{padding:14px 12px; border-bottom:1px solid var(--rule); vertical-align:top;}
+.queue tr.is-flagged{background:var(--alert-bg);}
+.queue tr:hover{background:var(--paper-2);}
+.queue a.row-link{color:var(--ink); text-decoration:none; font-weight:600;}
+.queue a.row-link:hover{text-decoration:underline;}
+/* ---------- summary sheet sections ---------- */
+.hx-section{border-top:1px solid var(--rule); padding:18px 0;}
+.hx-section:first-child{border-top:none;}
+.hx-section h4{
+  font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:.78rem;
+  color:var(--teal-deep); text-transform:none; margin-bottom:8px;
+}
+.hx-section dl{display:grid; grid-template-columns:180px 1fr; gap:6px 16px; margin:0;}
+.hx-section dt{color:var(--ink-soft); font-size:.9rem;}
+.hx-section dd{margin:0; font-size:.95rem;}
+.lang-toggle{display:inline-flex; border:1.5px solid var(--rule-strong); border-radius:20px; overflow:hidden;}
+.lang-toggle button{padding:6px 16px; background:#fff; border:none; font-size:.85rem; font-weight:600; color:var(--ink-soft);}
+.lang-toggle button.is-active{background:var(--ink); color:var(--paper);}
+footer.site-footer{border-top:1px solid var(--rule); margin-top:64px; padding:28px 0; color:var(--ink-soft); font-size:.85rem;}
+/* utility */
+.stack{display:flex; flex-direction:column; gap:14px;}
+.row{display:flex; gap:14px; flex-wrap:wrap; align-items:center;}
+.row.between{justify-content:space-between;}
+.mt-0{margin-top:0;} .mt-1{margin-top:8px;} .mt-2{margin-top:16px;} .mt-3{margin-top:28px;} .mt-4{margin-top:48px;}
+.mb-0{margin-bottom:0;}
+.small{font-size:.85rem; color:var(--ink-soft);}
+.center{text-align:center;}
+.visually-hidden{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);}
+.progress{height:4px; background:var(--rule); position:relative; margin-bottom:26px;}
+.progress__fill{position:absolute; top:0; left:0; bottom:0; background:var(--teal); transition:width .25s ease;}
+.section-tag{font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--ink-soft); display:block; margin-bottom:4px;}
+.qa-nav{display:flex; justify-content:space-between; margin-top:24px;}
+.chip{display:inline-block; padding:4px 10px; border:1px solid var(--rule-strong); border-radius:20px; font-size:.8rem; margin:0 6px 6px 0; background:#fff;}
+.upload-zone{border:2px dashed var(--rule-strong); padding:36px 20px; text-align:center; background:var(--paper-2);}
+.upload-zone.is-drag{border-color:var(--teal); background:#EAF4F1;}
+.doc-card{border:1px solid var(--rule); background:#fff; padding:16px; margin-bottom:12px;}
+.spinner{display:inline-block; width:16px; height:16px; border:2px solid var(--rule-strong); border-top-color:var(--teal); border-radius:50%; animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.hero-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:56px; align-items:start;}
+.journey-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:18px; margin-top:28px;}
+@media (max-width: 900px){
+  .journey-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width: 720px){
+  .hero-grid{grid-template-columns:1fr; gap:32px;}
+  .journey-grid{grid-template-columns:1fr;}
+  .site-header__row{padding:14px 18px;}
+  .wrap{padding:0 18px;}
+  .header-nav{gap:14px;}
+  .hx-section dl{grid-template-columns:1fr;}
+  .sheet{padding:20px 18px;}
+}
+/* =========================================================
+   TECH STACK MODAL
+========================================================= */
+
+.tech-stack-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+
+  display:none;
+  align-items:center;
+  justify-content:center;
+
+  padding:24px;
+
+  background:rgba(10,30,25,.65);
+
+  backdrop-filter:blur(6px);
+
+  overflow-y:auto;
+}
+
+.tech-stack-overlay.active{
+  display:flex;
+}
+
+
+.tech-stack-modal{
+  width:min(1050px,100%);
+  max-height:92vh;
+
+  overflow-y:auto;
+
+  background:var(--paper);
+
+  border:1px solid var(--rule);
+
+  border-radius:16px;
+
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.25);
+
+  animation:techModalIn .2s ease;
+}
+
+
+@keyframes techModalIn{
+
+  from{
+    opacity:0;
+    transform:translateY(15px) scale(.98);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+
+}
+
+
+.tech-stack-header{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:20px;
+
+  padding:30px 32px 24px;
+
+  border-bottom:1px solid var(--rule);
+
+  background:var(--paper-2);
+
+}
+
+
+.tech-stack-label{
+
+  margin-bottom:6px;
+
+  color:var(--teal);
+
+  font-family:'IBM Plex Mono',monospace;
+
+  font-size:11px;
+
+  font-weight:700;
+
+  letter-spacing:.15em;
+}
+
+
+.tech-stack-header h2{
+
+  margin:0;
+
+  color:var(--ink);
+
+  font-size:30px;
+
+}
+
+
+.tech-stack-header p{
+
+  margin:8px 0 0;
+
+  color:var(--ink-soft);
+
+  font-size:14px;
+
+}
+
+
+.tech-stack-close{
+
+  width:38px;
+  height:38px;
+
+  flex-shrink:0;
+
+  border:1px solid var(--rule);
+
+  border-radius:50%;
+
+  background:var(--paper);
+
+  color:var(--ink);
+
+  font-size:25px;
+
+  cursor:pointer;
+
+}
+
+
+.tech-stack-close:hover{
+
+  background:var(--teal);
+
+  color:#fff;
+
+  border-color:var(--teal);
+
+}
+
+
+.tech-stack-content{
+
+  padding:28px 32px 10px;
+
+}
+
+
+.tech-category{
+
+  margin-bottom:34px;
+
+}
+
+
+.tech-category-title{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:13px;
+
+  margin-bottom:17px;
+
+}
+
+
+.tech-icon{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  width:38px;
+  height:38px;
+
+  border-radius:9px;
+
+  background:var(--teal);
+
+  color:#fff;
+
+  font-size:17px;
+
+}
+
+
+.tech-category-title h3{
+
+  margin:0;
+
+  font-size:18px;
+
+}
+
+
+.tech-category-title p{
+
+  margin:3px 0 0;
+
+  color:var(--ink-soft);
+
+  font-size:12px;
+
+}
+
+
+.tech-grid{
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap:12px;
+
+}
+
+
+.tech-card{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  gap:14px;
+
+  padding:17px;
+
+  border:1px solid var(--rule);
+
+  border-radius:11px;
+
+  background:#fff;
+
+  transition:
+    transform .2s ease,
+    border-color .2s ease;
+}
+
+
+.tech-card:hover{
+
+  transform:translateY(-2px);
+
+  border-color:var(--teal);
+
+}
+
+
+.tech-card-icon{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  flex:0 0 auto;
+
+  width:48px;
+  height:48px;
+
+  border-radius:9px;
+
+  background:var(--paper-2);
+
+  color:var(--teal);
+
+  font-family:'IBM Plex Mono',monospace;
+
+  font-size:10px;
+
+  font-weight:700;
+
+}
+
+
+.tech-card h4{
+
+  margin:1px 0 5px;
+
+  font-size:15px;
+
+}
+
+
+.tech-card p{
+
+  margin:0;
+
+  color:var(--ink-soft);
+
+  font-size:12px;
+
+  line-height:1.55;
+
+}
+
+
+.architecture-grid{
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap:12px;
+
+}
+
+
+.architecture-card{
+
+  padding:20px;
+
+  min-height:145px;
+
+  border:1px solid var(--rule);
+
+  border-radius:11px;
+
+  background:#fff;
+
+}
+
+
+.architecture-card span{
+
+  display:inline-block;
+
+  margin-bottom:12px;
+
+  color:var(--teal);
+
+  font-family:'IBM Plex Mono',monospace;
+
+  font-size:10px;
+
+  font-weight:700;
+
+}
+
+
+.architecture-card h4{
+
+  margin:0 0 7px;
+
+  font-size:14px;
+
+}
+
+
+.architecture-card p{
+
+  margin:0;
+
+  color:var(--ink-soft);
+
+  font-size:12px;
+
+  line-height:1.55;
+
+}
+
+
+.system-flow{
+
+  display:flex;
+
+  align-items:center;
+
+  flex-wrap:wrap;
+
+  gap:8px;
+
+  padding:20px;
+
+  border:1px solid var(--rule);
+
+  border-radius:12px;
+
+  background:var(--paper-2);
+
+}
+
+
+.flow-item{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:3px;
+
+  padding:12px 14px;
+
+  border:1px solid var(--rule);
+
+  border-radius:8px;
+
+  background:var(--paper);
+
+  min-width:120px;
+
+}
+
+
+.flow-item span{
+
+  color:var(--teal);
+
+  font-family:'IBM Plex Mono',monospace;
+
+  font-size:9px;
+
+}
+
+
+.flow-item strong{
+
+  font-size:11px;
+
+}
+
+
+.flow-arrow{
+
+  color:var(--teal);
+
+  font-size:18px;
+
+}
+
+
+.tech-stack-footer{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  padding:16px 32px;
+
+  border-top:1px solid var(--rule);
+
+  color:var(--ink-soft);
+
+  font-family:'IBM Plex Mono',monospace;
+
+  font-size:10px;
+
+}
+
+
+.tech-stack-footer span:first-child{
+
+  color:var(--teal);
+
+  font-weight:700;
+
+}
+
+
+/* =========================================================
+   TECH STACK MOBILE
+========================================================= */
+
+@media (max-width:700px){
+
+  .tech-stack-overlay{
+    padding:10px;
+  }
+
+  .tech-stack-header{
+    padding:22px;
+  }
+
+  .tech-stack-header h2{
+    font-size:24px;
+  }
+
+  .tech-stack-content{
+    padding:22px;
+  }
+
+  .tech-grid,
+  .architecture-grid{
+    grid-template-columns:1fr;
+  }
+
+  .system-flow{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .flow-arrow{
+    transform:rotate(90deg);
+    align-self:center;
+  }
+
+  .flow-item{
+    width:100%;
+  }
+
+}
+</style>
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+<main id="app"></main>
+<footer class="site-footer" id="site-footer"></footer>
+<script>
+/* ================================================================
+   MediKiosk — single-file build
+   ----------------------------------------------------------------
+   This is the same app as the multi-page version, merged into one
+   HTML file for easy download/sharing. Navigation between the 5
+   journey steps is done with URL hashes (#/login, #/patient-intake,
+   etc.) instead of separate .html files — everything else (the
+   mock backend, the adaptive interview engine, the red-flag rules,
+   the structured-summary renderer) is unchanged.
+   ================================================================ */
+/* ---------------------------------------------------------------- */
+/* HistoryEngine — adaptive history-interview engine (Module A stand-in) */
+/* ---------------------------------------------------------------- */
+const CHIEF_COMPLAINTS = [
+  { key: 'chestPain', label: 'Chest pain', icon: '🫀' },
+  { key: 'breathlessness', label: 'Breathlessness', icon: '💨' },
+  { key: 'abdominalPain', label: 'Stomach / abdominal pain', icon: '🩺' },
+  { key: 'headache', label: 'Headache', icon: '🧠' },
+  { key: 'fever', label: 'Fever', icon: '🌡️' },
+  { key: 'cough', label: 'Cough / cold', icon: '😮‍💨' },
+  { key: 'jointPain', label: 'Joint / body pain', icon: '🦴' },
+  { key: 'other', label: 'Something else', icon: '✏️' },
+];
+const CHIEF_COMPLAINT_QUESTIONS = {
+  chestPain: [
+    { id: 'onset', type: 'choice', text: 'When did the pain start?', options: ['Less than 1 hour ago', '1–6 hours ago', 'Today, more than 6 hours ago', 'More than a day ago'] },
+    { id: 'character', type: 'choice', text: 'How would you describe the pain?', options: ['Sharp / stabbing', 'Dull / aching', 'Gripping / crushing', 'Burning'] },
+    { id: 'radiation', type: 'multi', text: 'Does the pain spread anywhere else?', options: ['Left arm', 'Jaw', 'Back', 'No spread'] },
+    { id: 'associated', type: 'multi', text: 'Are any of these happening along with the pain?', options: ['Sweating', 'Breathlessness', 'Nausea/vomiting', 'Palpitations', 'None of these'] },
+    { id: 'severity', type: 'severity', text: 'How severe is the pain right now?' },
+    { id: 'modifying', type: 'choice', text: 'Does anything change it?', options: ['Better with rest', 'Worse on exertion', 'Worse on breathing or coughing', 'No change'] },
+  ],
+  breathlessness: [
+    { id: 'onset', type: 'choice', text: 'When did the breathlessness start?', options: ['Suddenly, within minutes', 'Over a few hours', 'Gradually over days', 'Gradually over weeks'] },
+    { id: 'trigger', type: 'choice', text: 'When is it worst?', options: ['At rest', 'On exertion / walking', 'Lying flat', 'No clear pattern'] },
+    { id: 'associated', type: 'multi', text: 'Anything else alongside it?', options: ['Chest pain', 'Cough', 'Swelling in legs', 'Wheeze', 'None of these'] },
+    { id: 'severity', type: 'severity', text: 'How severe is it right now?' },
+  ],
+  abdominalPain: [
+    { id: 'site', type: 'choice', text: 'Where is the pain mainly?', options: ['Upper abdomen', 'Around the navel', 'Lower abdomen', 'Whole abdomen'] },
+    { id: 'onset', type: 'choice', text: 'When did it start?', options: ['Less than 6 hours ago', 'Today', 'Few days ago', 'More than a week ago'] },
+    { id: 'character', type: 'choice', text: 'What does the pain feel like?', options: ['Cramping / comes and goes', 'Constant / steady', 'Sharp', 'Burning'] },
+    { id: 'associated', type: 'multi', text: 'Any of these along with it?', options: ['Vomiting', 'Vomiting blood', 'Fever', 'Loose stools', 'Constipation', 'None of these'] },
+    { id: 'severity', type: 'severity', text: 'How severe is the pain?' },
+  ],
+  headache: [
+    { id: 'onset', type: 'choice', text: 'How did the headache begin?', options: ['Sudden, worst headache of my life', 'Came on gradually today', 'Been recurring for weeks', 'Comes and goes for months/years'] },
+    { id: 'site', type: 'choice', text: 'Where is it?', options: ['One side', 'Both sides', 'Back of head', 'All over'] },
+    { id: 'associated', type: 'multi', text: 'Anything with the headache?', options: ['Neck stiffness or confusion', 'Nausea/vomiting', 'Sensitivity to light', 'Blurred vision', 'None of these'] },
+    { id: 'severity', type: 'severity', text: 'How severe is it?' },
+  ],
+  fever: [
+    { id: 'duration', type: 'choice', text: 'How long has the fever lasted?', options: ['Since today', '2–3 days', 'About a week', 'More than a week'] },
+    { id: 'pattern', type: 'choice', text: 'Pattern of the fever?', options: ['Continuous', 'Comes with chills, then breaks with sweating', 'Low-grade, on and off'] },
+    { id: 'associated', type: 'multi', text: 'Any of these along with the fever?', options: ['Neck stiffness or confusion', 'Rash', 'Joint pain', 'Cough', 'Loose stools', 'None of these'] },
+    { id: 'severity', type: 'severity', text: 'How unwell do you feel overall?' },
+  ],
+  cough: [
+    { id: 'duration', type: 'choice', text: 'How long have you had the cough?', options: ['Less than a week', '1–3 weeks', 'More than 3 weeks'] },
+    { id: 'character', type: 'choice', text: 'What kind of cough is it?', options: ['Dry', 'Brings up phlegm', 'Brings up blood'] },
+    { id: 'associated', type: 'multi', text: 'Anything with the cough?', options: ['Fever', 'Breathlessness', 'Chest pain', 'Weight loss', 'None of these'] },
+    { id: 'severity', type: 'severity', text: 'How much is it affecting you?' },
+  ],
+  jointPain: [
+    { id: 'site', type: 'multi', text: 'Which joints are affected?', options: ['Knees', 'Hands / fingers', 'Back', 'Shoulders', 'Ankles'] },
+    { id: 'duration', type: 'choice', text: 'How long has this been going on?', options: ['A few days', 'A few weeks', 'Months', 'Years, comes and goes'] },
+    { id: 'associated', type: 'multi', text: 'Any of these too?', options: ['Morning stiffness', 'Swelling', 'Redness / warmth', 'Fever', 'None of these'] },
+    { id: 'severity', type: 'severity', text: 'How severe is the pain?' },
+  ],
+  other: [
+    { id: 'describe', type: 'text', text: 'Please describe the main problem in your own words.' },
+    { id: 'duration', type: 'choice', text: 'How long has this been going on?', options: ['Today', 'A few days', 'A few weeks', 'Longer'] },
+    { id: 'severity', type: 'severity', text: 'How much is it bothering you?' },
+  ],
+};
+const COMMON_SECTIONS = [
+  {
+    key: 'pastHistory', title: 'Past medical & surgical history',
+    questions: [
+      { id: 'chronicConditions', type: 'multi', text: 'Do you have any of these long-term conditions?', options: ['Diabetes', 'High blood pressure', 'Heart disease', 'Asthma / COPD', 'Thyroid disorder', 'Kidney disease', 'None of these'] },
+      { id: 'surgeries', type: 'text', text: 'Any past surgeries or hospital admissions? Type "none" if not applicable.' },
+    ],
+  },
+  {
+    key: 'drugAllergy', title: 'Drug & allergy history',
+    questions: [
+      { id: 'medications', type: 'text', text: 'List any medicines you take regularly, with dose if you know it.' },
+      { id: 'allergies', type: 'text', text: 'Are you allergic to any medicine or food? Type "none" if not applicable.' },
+    ],
+  },
+  {
+    key: 'familyHistory', title: 'Family history',
+    questions: [
+      { id: 'family', type: 'multi', text: 'Has a parent or sibling had any of these?', options: ['Heart disease', 'Diabetes', 'Cancer', 'High blood pressure', 'None of these'] },
+    ],
+  },
+  {
+    key: 'personalHistory', title: 'Personal history',
+    questions: [
+      { id: 'habits', type: 'multi', text: 'Do any of these apply to you?', options: ['Smokes', 'Drinks alcohol regularly', 'Tobacco / paan / gutkha use', 'Vegetarian diet', 'None of these'] },
+      { id: 'occupation', type: 'text', text: 'What is your occupation?' },
+    ],
+  },
+  {
+    key: 'ros', title: 'Review of systems',
+    questions: [
+      { id: 'rosGeneral', type: 'multi', text: 'In the last few weeks, have you had any of these?', options: ['Unexplained weight loss', 'Loss of appetite', 'Night sweats', 'Persistent tiredness', 'None of these'] },
+    ],
+  },
+];
+const AYUSH_SECTION = {
+  key: 'ayush', title: 'AYUSH assessment (Dashavidha Pariksha)',
+  questions: [
+    { id: 'prakriti', type: 'choice', text: 'Which best describes your usual body build and temperament (Prakriti)?', options: ['Thin, quick, restless (Vata-dominant)', 'Medium build, sharp appetite, warm (Pitta-dominant)', 'Sturdy build, calm, slow digestion (Kapha-dominant)', 'Not sure'] },
+    { id: 'agni', type: 'choice', text: 'How would you describe your digestive capacity (Agni)?', options: ['Strong, rarely upset', 'Variable, sometimes weak', 'Weak, easily upset'] },
+    { id: 'koshtha', type: 'choice', text: 'How are your bowel habits (Koshtha)?', options: ['Regular, soft', 'Irregular', 'Tends towards constipation'] },
+    { id: 'aharaVihara', type: 'text', text: 'Briefly describe your typical diet and daily routine (Ahara-Vihara).' },
+  ],
+};
+function buildQuestionFlow(chiefComplaintKey, { ayush } = {}) {
+  const cc = CHIEF_COMPLAINT_QUESTIONS[chiefComplaintKey] || CHIEF_COMPLAINT_QUESTIONS.other;
+  const sections = [
+    { key: 'chiefComplaint', title: 'About your main problem', questions: cc },
+    ...COMMON_SECTIONS,
+  ];
+  if (ayush) sections.push(AYUSH_SECTION);
+  return sections;
+}
+const RED_FLAG_RULES = [
+  { test: (cc, a) => cc === 'chestPain' && hasAny(a.associated, ['Sweating', 'Breathlessness', 'Nausea/vomiting']),
+    reason: 'Chest pain with sweating, breathlessness or nausea — pattern consistent with a possible acute coronary event.' },
+  { test: (cc, a) => cc === 'headache' && hasAny(a.onset, ['Sudden, worst headache of my life']),
+    reason: 'Thunderclap headache reported — possible subarachnoid haemorrhage.' },
+  { test: (cc, a) => cc === 'headache' && hasAny(a.associated, ['Neck stiffness or confusion']),
+    reason: 'Headache with neck stiffness or confusion — possible meningitis.' },
+  { test: (cc, a) => cc === 'fever' && hasAny(a.associated, ['Neck stiffness or confusion']),
+    reason: 'Fever with neck stiffness or confusion — possible meningitis.' },
+  { test: (cc, a) => cc === 'breathlessness' && Number(a.severity) >= 8,
+    reason: 'Severe breathlessness (self-rated 8/10 or higher).' },
+  { test: (cc, a) => cc === 'abdominalPain' && hasAny(a.associated, ['Vomiting blood']),
+    reason: 'Reported blood in vomit — possible upper gastrointestinal bleed.' },
+  { test: (cc, a) => cc === 'cough' && hasAny(a.character, ['Brings up blood']),
+    reason: 'Coughing up blood (haemoptysis).' },
+];
+function hasAny(value, targets) {
+  if (!value) return false;
+  const arr = Array.isArray(value) ? value : [value];
+  return arr.some((v) => targets.includes(v));
+}
+function checkRedFlags(chiefComplaintKey, answers) {
+  for (const rule of RED_FLAG_RULES) {
+    if (rule.test(chiefComplaintKey, answers)) return { level: 'high', reason: rule.reason };
+  }
+  return null;
+}
+function summarizeChiefComplaint(chiefComplaintKey, answers, freeText) {
+  const label = (CHIEF_COMPLAINTS.find((c) => c.key === chiefComplaintKey) || {}).label || 'Presenting complaint';
+  const bits = [];
+  if (answers.onset) bits.push(`onset ${answers.onset.toLowerCase()}`);
+  if (answers.site) bits.push(`site: ${Array.isArray(answers.site) ? answers.site.join(', ') : answers.site}`);
+  if (answers.character) bits.push(`character: ${answers.character.toLowerCase()}`);
+  if (answers.radiation) bits.push(`radiation: ${Array.isArray(answers.radiation) ? answers.radiation.join(', ') : answers.radiation}`);
+  if (answers.associated) bits.push(`associated with ${(Array.isArray(answers.associated) ? answers.associated : [answers.associated]).join(', ').toLowerCase()}`);
+  if (answers.trigger) bits.push(`worst: ${answers.trigger.toLowerCase()}`);
+  if (answers.pattern) bits.push(`pattern: ${answers.pattern.toLowerCase()}`);
+  if (answers.duration) bits.push(`duration: ${answers.duration.toLowerCase()}`);
+  if (answers.modifying) bits.push(answers.modifying.toLowerCase());
+  if (answers.severity != null) bits.push(`severity ${answers.severity}/10`);
+  if (chiefComplaintKey === 'other' && freeText) bits.unshift(freeText);
+  return `${label}. ${bits.join('; ')}.`;
+}
+const HistoryEngine = { CHIEF_COMPLAINTS, COMMON_SECTIONS, AYUSH_SECTION, buildQuestionFlow, checkRedFlags, summarizeChiefComplaint };
+/* ---------------------------------------------------------------- */
+/* MediKioskAPI — mock backend (see the comment block for the real  */
+/* REST contract each function is written to match)                  */
+/* ---------------------------------------------------------------- */
+const CONFIG = { baseUrl: 'https://api.medikiosk.example.org' };
+const MOCK_MODE = true;
+const DB_KEY = 'mediKiosk_db_v1';
+function loadDb() {
+  const raw = localStorage.getItem(DB_KEY);
+  if (raw) return JSON.parse(raw);
+  const seeded = seedDb();
+  localStorage.setItem(DB_KEY, JSON.stringify(seeded));
+  return seeded;
+}
+function saveDb(db) { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+function uid(prefix) { return prefix + '_' + Math.random().toString(36).slice(2, 9); }
+function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+function tokenNo(db) { const n = (db.tokenCounter || 40) + 1; db.tokenCounter = n; return 'OPD-' + String(n).padStart(4, '0'); }
+function seedDb() {
+  const db = {
+    patients: {}, sessions: {}, documents: {}, summaries: {},
+    staff: { 'dr.rao@medikiosk.example.org': { id: 'staff_1', name: 'Dr. Ananya Rao', password: 'demo123', department: 'General Medicine' } },
+    tokenCounter: 40,
+  };
+  const p1 = 'pat_seed_1';
+  db.patients[p1] = { id: p1, name: 'Suresh Yadav', age: 58, gender: 'Male', phone: '98xxxxxx12', preferredLanguage: 'Hindi', abhaId: '14-2233-4455-6677', tokenNo: 'OPD-0041', registeredAt: new Date(Date.now() - 22 * 60000).toISOString() };
+  db.summaries['sum_seed_1'] = {
+    id: 'sum_seed_1', patientId: p1, status: 'ready',
+    redFlag: { level: 'high', reason: 'Chest pain with breathlessness and sweating reported — possible acute coronary event.' },
+    chiefComplaint: 'Chest pain since this morning, radiating to left arm',
+    hpi: 'Onset ~3 hours ago while resting. Constant, gripping quality, 8/10 severity, radiates to left arm and jaw. Associated with sweating and breathlessness. Not relieved by rest.',
+    pastHistory: 'Type 2 diabetes (8 years), hypertension (5 years). No prior cardiac events.',
+    drugAllergy: 'Metformin 500mg BD, Amlodipine 5mg OD. No known drug allergies.',
+    familyHistory: 'Father died of myocardial infarction at age 61.',
+    personalHistory: 'Smoker, ~10 cigarettes/day for 20 years. Occasional alcohol.',
+    ros: 'No fever. No cough. Mild nausea. No prior similar episodes.',
+    investigationsSummary: 'No prior ECG on file. Last HbA1c (digitized from uploaded report, 3 months ago): 8.2% (high).',
+    generatedAt: new Date(Date.now() - 6 * 60000).toISOString(),
+  };
+  const p2 = 'pat_seed_2';
+  db.patients[p2] = { id: p2, name: 'Kavita Sharma', age: 34, gender: 'Female', phone: '98xxxxxx77', preferredLanguage: 'English', abhaId: '14-9988-1122-3344', tokenNo: 'OPD-0039', registeredAt: new Date(Date.now() - 40 * 60000).toISOString() };
+  db.summaries['sum_seed_2'] = {
+    id: 'sum_seed_2', patientId: p2, status: 'ready', redFlag: null,
+    chiefComplaint: 'Intermittent lower back pain for 2 weeks',
+    hpi: 'Dull aching pain, 4/10, worse on prolonged sitting, no radiation to legs. No trauma history. Mild relief with rest and paracetamol.',
+    pastHistory: 'No chronic illness.',
+    drugAllergy: 'Occasional paracetamol. No known allergies.',
+    familyHistory: 'Mother has osteoarthritis.',
+    personalHistory: 'Desk job, sedentary, sits 8+ hours/day.',
+    ros: 'No fever, no weight loss, no bladder/bowel symptoms.',
+    investigationsSummary: 'No prior imaging or labs on file.',
+    generatedAt: new Date(Date.now() - 15 * 60000).toISOString(),
+  };
+  return db;
+}
+const AuthAPI = {
+  async patientLookup({ abhaId }) {
+    await delay(500);
+    const db = loadDb();
+    const found = Object.values(db.patients).find((p) => p.abhaId === abhaId);
+    return found ? { exists: true, patientId: found.id, name: found.name } : { exists: false };
+  },
+  async patientRegister(data) {
+    await delay(600);
+    const db = loadDb();
+    const id = uid('pat');
+    const token = tokenNo(db);
+    db.patients[id] = { id, ...data, tokenNo: token, registeredAt: new Date().toISOString() };
+    saveDb(db);
+    return { patientId: id, tokenNo: token };
+  },
+  async patientConsent({ patientId, consents }) {
+    await delay(300);
+    const db = loadDb();
+    if (db.patients[patientId]) db.patients[patientId].consents = consents;
+    saveDb(db);
+    return { ok: true };
+  },
+  async staffLogin({ email, password }) {
+    await delay(500);
+    const db = loadDb();
+    const staff = db.staff[email];
+    if (!staff || staff.password !== password) return { ok: false, error: 'Incorrect email or password.' };
+    return { ok: true, token: 'mock-token-' + staff.id, staff: { id: staff.id, name: staff.name, department: staff.department } };
+  },
+};
+const HistoryAPI = {
+  async createSession({ patientId, chiefComplaint, language, mode }) {
+    await delay(300);
+    const db = loadDb();
+    const id = uid('sess');
+    db.sessions[id] = { id, patientId, chiefComplaint, language, mode, answers: [], createdAt: new Date().toISOString() };
+    saveDb(db);
+    return { sessionId: id };
+  },
+  async saveAnswers(sessionId, answers) {
+    await delay(150);
+    const db = loadDb();
+    if (db.sessions[sessionId]) { db.sessions[sessionId].answers = answers; saveDb(db); }
+    return { ok: true };
+  },
+  async getSession(sessionId) {
+    const db = loadDb();
+    return db.sessions[sessionId] || null;
+  },
+};
+const MOCK_EXTRACTIONS = [
+  { docType: 'Lab report', provider: 'City Diagnostics Lab', date: '2026-06-12', diagnoses: [], medications: [],
+    investigations: [
+      { name: 'HbA1c', value: '8.2', unit: '%', refRange: '<5.7', abnormal: true },
+      { name: 'Fasting glucose', value: '162', unit: 'mg/dL', refRange: '70–100', abnormal: true },
+      { name: 'Total cholesterol', value: '198', unit: 'mg/dL', refRange: '<200', abnormal: false },
+    ] },
+  { docType: 'Prescription', provider: 'Dr. M. Iyer, Sunrise Clinic', date: '2026-07-03',
+    diagnoses: ['Type 2 diabetes mellitus', 'Essential hypertension'],
+    medications: [{ name: 'Metformin', dose: '500mg', frequency: 'BD' }, { name: 'Amlodipine', dose: '5mg', frequency: 'OD' }],
+    investigations: [] },
+  { docType: 'Discharge summary', provider: 'District General Hospital', date: '2025-11-20',
+    diagnoses: ['Acute gastroenteritis'], medications: [{ name: 'Ondansetron', dose: '4mg', frequency: 'SOS' }],
+    investigations: [{ name: 'Hemoglobin', value: '11.8', unit: 'g/dL', refRange: '13.0–17.0', abnormal: true }] },
+];
+const DocsAPI = {
+  async upload(patientId, file) {
+    await delay(1600);
+    const db = loadDb();
+    const id = uid('doc');
+    const picked = MOCK_EXTRACTIONS[Object.keys(db.documents).length % MOCK_EXTRACTIONS.length];
+    db.documents[id] = { id, patientId, fileName: file ? file.name : 'scanned-document.jpg', status: 'complete', uploadedAt: new Date().toISOString(), extracted: picked };
+    saveDb(db);
+    return { documentId: id, status: 'complete', extracted: picked };
+  },
+  async getDocument(documentId) { const db = loadDb(); return db.documents[documentId] || null; },
+  async getTimeline(patientId) {
+    const db = loadDb();
+    return Object.values(db.documents).filter((d) => d.patientId === patientId).sort((a, b) => new Date(a.extracted.date) - new Date(b.extracted.date));
+  },
+};
+const SummaryAPI = {
+  async generate(patientId, { documentIds, structured, redFlag }) {
+    await delay(1400);
+    const db = loadDb();
+    const id = uid('sum');
+    const docs = (documentIds || []).map((did) => db.documents[did]).filter(Boolean);
+    const investigationsSummary = docs.length
+      ? docs.map((d) => `${d.extracted.docType} (${d.extracted.date}, ${d.extracted.provider}): ` +
+          (d.extracted.investigations.map((i) => `${i.name} ${i.value}${i.unit}${i.abnormal ? ' (abnormal)' : ''}`).join(', ') || 'no lab values'))
+        .join(' · ')
+      : 'No prior documents digitized.';
+    db.summaries[id] = { id, patientId, status: 'ready', redFlag: redFlag || null, generatedAt: new Date().toISOString(), investigationsSummary, ...structured };
+    saveDb(db);
+    return { summaryId: id, summary: db.summaries[id] };
+  },
+  async get(summaryId) { const db = loadDb(); return db.summaries[summaryId] || null; },
+  async confirm(summaryId, patientId) {
+    await delay(900);
+    const db = loadDb();
+    const patient = db.patients[patientId];
+    return { ok: true, opdToken: patient ? patient.tokenNo : tokenNo(db), pushedToHIS: true, abhaLinked: !!(patient && patient.abhaId) };
+  },
+  async doctorUpdate(summaryId, edits) {
+    await delay(400);
+    const db = loadDb();
+    if (db.summaries[summaryId]) { Object.assign(db.summaries[summaryId], edits, { doctorConfirmedAt: new Date().toISOString() }); saveDb(db); }
+    return { ok: true };
+  },
+};
+const QueueAPI = {
+  async list() {
+    await delay(350);
+    const db = loadDb();
+    return Object.values(db.summaries)
+      .filter((s) => s.status === 'ready')
+      .map((s) => {
+        const p = db.patients[s.patientId] || {};
+        return { summaryId: s.id, patientId: s.patientId, name: p.name, age: p.age, gender: p.gender, tokenNo: p.tokenNo, chiefComplaint: s.chiefComplaint, redFlag: s.redFlag, generatedAt: s.generatedAt };
+      })
+      .sort((a, b) => { const af = a.redFlag ? 1 : 0, bf = b.redFlag ? 1 : 0; if (af !== bf) return bf - af; return new Date(a.generatedAt) - new Date(b.generatedAt); });
+  },
+};
+const MediKioskAPI = { CONFIG, MOCK_MODE, AuthAPI, HistoryAPI, DocsAPI, SummaryAPI, QueueAPI };
+/* ---------------------------------------------------------------- */
+/* SummaryRender — shared structured-summary renderer                */
+/* ---------------------------------------------------------------- */
+const SUMMARY_FIELDS = ['chiefComplaint', 'hpi', 'pastHistory', 'drugAllergy', 'familyHistory', 'personalHistory', 'ros', 'ayush', 'investigationsSummary'];
+const FIELD_LABELS = {
+  chiefComplaint: { en: 'Chief complaint', hi: 'मुख्य शिकायत' },
+  hpi: { en: 'History of present illness', hi: 'वर्तमान बीमारी का इतिहास' },
+  pastHistory: { en: 'Past medical & surgical history', hi: 'पूर्व चिकित्सा इतिहास' },
+  drugAllergy: { en: 'Drug & allergy history', hi: 'दवा एवं एलर्जी इतिहास' },
+  familyHistory: { en: 'Family history', hi: 'पारिवारिक इतिहास' },
+  personalHistory: { en: 'Personal history', hi: 'व्यक्तिगत इतिहास' },
+  ros: { en: 'Review of systems', hi: 'प्रणाली समीक्षा' },
+  ayush: { en: 'AYUSH assessment (Dashavidha Pariksha)', hi: 'आयुष मूल्यांकन' },
+  investigationsSummary: { en: 'Prior investigations', hi: 'पूर्व जांच रिपोर्ट' },
+};
+function renderSummarySheetHtml(mountEl, summary, { lang = 'en', editable = false } = {}) {
+  const rows = SUMMARY_FIELDS.filter((k) => summary[k]).map((k) => {
+    const label = FIELD_LABELS[k][lang] || FIELD_LABELS[k].en;
+    const value = summary[k];
+    const body = editable
+      ? `<textarea data-field="${k}" style="width:100%; min-height:64px; font-family:inherit; font-size:.95rem; border:1px solid var(--rule-strong); padding:8px;">${escGlobal(value)}</textarea>`
+      : `<p class="mb-0" style="max-width:none;">${escGlobal(value)}</p>`;
+    return `<div class="hx-section"><h4>${label}</h4>${body}</div>`;
+  }).join('');
+  mountEl.innerHTML = rows;
+}
+function renderRedFlagNoteHtml(mountEl, redFlag, { mode = 'patient' } = {}) {
+  if (!redFlag) { mountEl.innerHTML = ''; return; }
+  const text = mode === 'doctor' ? redFlag.reason : `${redFlag.reason} This has already been flagged to the nursing station for priority triage.`;
+  mountEl.innerHTML = `<div class="alert-banner" role="alert"><span aria-hidden="true">⚠</span><div><strong>${mode === 'doctor' ? 'Red flag on arrival' : 'Flagged for priority triage'}</strong><p>${text}</p></div></div>`;
+}
+function escGlobal(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+const SummaryRender = { SUMMARY_FIELDS, FIELD_LABELS, renderSummarySheet: renderSummarySheetHtml, renderRedFlagNote: renderRedFlagNoteHtml };
+/* ---------------------------------------------------------------- */
+/* Shared chrome: header + stepper                                   */
+/* ---------------------------------------------------------------- */
+const JOURNEY_STEPS = [
+  { key: 'identify', label: 'Identify' },
+  { key: 'converse', label: 'Converse' },
+  { key: 'scan', label: 'Scan' },
+  { key: 'summarize', label: 'Summarize & route' },
+  { key: 'consult', label: 'Consult' },
+];
+function renderHeader(mountId, { active } = {}) {
+  const mount = document.getElementById(mountId);
+  if (!mount) return;
+  mount.innerHTML = `
+    <div class="site-header__row">
+      <a class="brand" href="#/home">
+        <span class="brand__mark">MK</span>
+        <span class="brand__name">Medi<em>Kiosk</em></span>
+      </a>
+      <nav class="header-nav">
+        <a href="#/home" ${active === 'home' ? 'aria-current="page"' : ''}>About</a>
+        <a href="#/login" ${active === 'login' ? 'aria-current="page"' : ''}>Patient kiosk</a>
+        <a href="#/doctor-dashboard" ${active === 'dashboard' ? 'aria-current="page"' : ''}>Doctor sign-in</a>
+        <button
+        class="tech-stack-btn"
+        type="button"
+        onclick="openTechStack()"
+>
+        <span>⚙</span>
+        Tech Stack
+       </button>
+      </nav>
+    </div>
+  `;
+}
+function renderStepper(mountId, currentKey) {
+  const mount = document.getElementById(mountId);
+  if (!mount) return;
+  const idx = JOURNEY_STEPS.findIndex((s) => s.key === currentKey);
+  mount.innerHTML = JOURNEY_STEPS.map((s, i) => {
+    const cls = i < idx ? 'is-done' : i === idx ? 'is-current' : '';
+    const num = i < idx ? '✓' : i + 1;
+    return `<li class="${cls}"><span class="num">${num}</span> ${s.label}</li>`;
+  }).join('');
+}
+const MediKioskNav = { JOURNEY_STEPS, renderHeader, renderStepper };
+/* ================================================================
+   Page templates
+   ================================================================ */
+const TEMPLATES = {};
+TEMPLATES.home = `
+  <section class="wrap" style="padding:64px 28px 40px;">
+    <div class="hero-grid">
+      <div>
+        <h1>The history gets taken<br>before the doctor does.</h1>
+        <p style="font-size:1.15rem; max-width:34em;">
+          An Indian OPD physician has two to five minutes per patient. A proper
+          history alone — the single biggest driver of correct diagnosis —
+          takes longer than that to ask, let alone the exam, the reasoning,
+          the prescription. MediKiosk moves the asking to before the
+          consultation, so the minutes in the room go to the parts only a
+          doctor can do.
+        </p>
+        <div class="row mt-2">
+          <a class="btn btn--patient btn--lg" href="#/login?role=patient">I'm a patient</a>
+          <a class="btn btn--ghost btn--lg" href="#/login?role=doctor">I'm medical staff</a>
+        </div>
+        <p class="small mt-2">No smartphone or ABHA ID needed to try the patient flow below — registration on the kiosk takes under a minute.</p>
+      </div>
+      <div class="sheet" aria-hidden="true">
+        <span class="sheet__label">consultation screen · live preview</span>
+        <div class="row between mt-1">
+          <strong style="font-family:'IBM Plex Mono',monospace; font-size:.85rem;">OPD-0041 · Suresh Yadav, 58M</strong>
+          <span class="stamp stamp--flag">priority</span>
+        </div>
+        <div class="hx-section" style="padding-top:14px;">
+          <h4>Chief complaint</h4>
+          <p class="mb-0" style="max-width:none;">Chest pain since this morning, radiating to left arm.</p>
+        </div>
+        <div class="hx-section">
+          <h4>HPI</h4>
+          <p class="mb-0" style="max-width:none;">Onset ~3 hrs ago at rest. Gripping, 8/10, radiates to left arm and jaw. Sweating, breathlessness. Not relieved by rest.</p>
+        </div>
+        <div class="hx-section">
+          <h4>Flagged on arrival</h4>
+          <p class="mb-0" style="max-width:none; color:var(--alert);">Pattern consistent with possible acute coronary event — sent to priority triage automatically.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="wrap wrap--narrow mt-4">
+    <span class="sheet__label">the problem</span>
+    <h2 class="mt-1">Three numbers that explain the bottleneck</h2>
+    <div class="panel stack mt-2">
+      <p><strong class="mono">70–80%</strong> of diagnoses come from history alone, before any exam or test —
+      classical clinical teaching that still holds up.</p>
+      <p><strong class="mono">2–5 min</strong> is the average consultation length reported in India's busiest
+      government OPDs — among the shortest in the world (BMJ Open, 2017, 67-country study).</p>
+      <p><strong class="mono">4,000–10,000</strong> patients register per day at some tertiary government
+      hospitals, so the shortfall isn't a staffing gap that hiring quietly closes.</p>
+    </div>
+    <p class="mt-2">In that window a physician is expected to take a history, examine, read
+    whatever paper records the patient is carrying, reason, counsel, and
+    prescribe. Something is always cut short, and it's almost always the
+    history — the part that mattered most.</p>
+  </section>
+  <section class="wrap wrap--narrow mt-4">
+    <span class="sheet__label">why this hasn't been solved yet</span>
+    <h2 class="mt-1">The gap existing tools leave open</h2>
+    <div class="stack mt-2">
+      <div class="hx-section">
+        <h4>Hospital registration counters</h4>
+        <p class="mb-0">Capture name, age, department, token number. No clinical content at all.</p>
+      </div>
+      <div class="hx-section">
+        <h4>Mobile health apps &amp; tele-triage chatbots</h4>
+        <p class="mb-0">Assume a smartphone, a stable connection, and enrolment before the visit —
+        which excludes most of the elderly, rural, low-literacy and first-visit
+        patients an OPD actually sees.</p>
+      </div>
+      <div class="hx-section">
+        <h4>Nurse-led triage desks</h4>
+        <p class="mb-0">Genuinely capture history, but are as staff-limited as the doctors they're
+        meant to relieve — they don't scale to thousands of patients a day.</p>
+      </div>
+      <div class="hx-section">
+        <h4>Document scanners</h4>
+        <p class="mb-0">Digitize an image of a prescription. They don't read it, structure it, date
+        it, or link it to anything.</p>
+      </div>
+    </div>
+  </section>
+  <section class="wrap mt-4">
+    <span class="sheet__label">how a visit works</span>
+    <h2 class="mt-1">One patient, five steps, before they ever reach the room</h2>
+    <div class="journey-grid">
+      <div class="panel">
+        <span class="mono small">01</span>
+        <h3 class="mt-1" style="font-size:1.05rem;">Identify</h3>
+        <p class="small mb-0">ABHA ID, Aadhaar, or new registration. Language picked once, used everywhere after.</p>
+      </div>
+      <div class="panel">
+        <span class="mono small">02</span>
+        <h3 class="mt-1" style="font-size:1.05rem;">Converse</h3>
+        <p class="small mb-0">Voice or touch, in the patient's language. Follow-up questions branch off what they just said, the way a clinician's would.</p>
+      </div>
+      <div class="panel">
+        <span class="mono small">03</span>
+        <h3 class="mt-1" style="font-size:1.05rem;">Scan</h3>
+        <p class="small mb-0">Prior prescriptions and lab reports are photographed once, read, dated, and lined up on a timeline.</p>
+      </div>
+      <div class="panel">
+        <span class="mono small">04</span>
+        <h3 class="mt-1" style="font-size:1.05rem;">Summarize &amp; route</h3>
+        <p class="small mb-0">A standard-format history is generated, confirmed by the patient, and pushed to the hospital system and ABHA record.</p>
+      </div>
+      <div class="panel">
+        <span class="mono small">05</span>
+        <h3 class="mt-1" style="font-size:1.05rem;">Consult</h3>
+        <p class="small mb-0">The doctor opens a complete, structured history in seconds — and spends the visit examining, reasoning, and explaining.</p>
+      </div>
+    </div>
+  </section>
+  <section class="wrap wrap--narrow mt-4">
+    <span class="sheet__label">what the doctor stays in control of</span>
+    <h2 class="mt-1">A draft, never a diagnosis</h2>
+    <p>Every summary is editable and must be confirmed by the treating doctor
+    before it's saved — MediKiosk organizes what the patient already said and
+    what their documents already show, it doesn't decide anything clinical.
+    Symptom combinations matching known emergency patterns (chest pain with
+    breathlessness, a thunderclap headache, blood in vomit) are flagged for
+    immediate triage the moment they're reported, not queued behind routine
+    check-ins.</p>
+    <p>Consent is granular and revocable, explained by audio for patients who
+    can't read the screen, and every session's temporary data is cleared the
+    moment it's submitted — built around the DPDP Act 2023 and the ABDM
+    consent framework rather than bolted on afterwards.</p>
+  </section>
+  <section class="wrap wrap--narrow mt-4 center" style="padding-bottom:64px;">
+    <h2>Try the patient journey yourself</h2>
+    <p class="center" style="margin-left:auto; margin-right:auto;">It's the same five steps a real patient walks through at the kiosk —
+    registration, the adaptive interview, document upload, and the summary a
+    doctor would see next.</p>
+    <a class="btn btn--patient btn--lg mt-1" href="#/login?role=patient">Start as a patient</a>
+  </section>
+`;
+TEMPLATES.login = `
+  <div class="wrap wrap--narrow" style="padding:40px 28px 80px;">
+    <ol class="stepper" id="stepper"></ol>
+    <div class="tabs" role="tablist" aria-label="Sign in as">
+      <button type="button" id="tab-patient" role="tab" data-role="patient">Patient</button>
+      <button type="button" id="tab-doctor" role="tab" data-role="doctor">Doctor / staff</button>
+    </div>
+    <section id="panel-patient">
+      <div class="field">
+        <label for="language">Which language would you like to use?</label>
+        <select id="language">
+          <option>Hindi</option>
+          <option selected>English</option>
+          <option>Bengali</option>
+          <option>Tamil</option>
+          <option>Telugu</option>
+          <option>Marathi</option>
+          <option>Gujarati</option>
+          <option>Kannada</option>
+        </select>
+        <p class="hint">This is used for the voice interview and for reading the summary back to you.</p>
+      </div>
+      <div id="patient-mode-returning">
+        <h3>Already registered?</h3>
+        <div class="field">
+          <label for="abhaId">ABHA ID</label>
+          <input type="text" id="abhaId" placeholder="14-2233-4455-6677" autocomplete="off">
+          <p class="hint">Try <span class="mono">14-2233-4455-6677</span> or <span class="mono">14-9988-1122-3344</span> to load a demo patient — or leave blank and register as new below.</p>
+        </div>
+        <button class="btn btn--patient btn--block" id="btn-lookup" type="button">Continue with ABHA ID</button>
+        <p class="center small mt-2">— or —</p>
+        <button class="btn btn--ghost btn--block" id="btn-show-register" type="button">I'm visiting for the first time</button>
+      </div>
+      <form id="patient-mode-register" class="stack mt-2" style="display:none;">
+        <h3>New patient registration</h3>
+        <div class="field">
+          <label for="name">Full name</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:1;">
+            <label for="age">Age</label>
+            <input type="text" id="age" inputmode="numeric" required>
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="gender">Gender</label>
+            <select id="gender">
+              <option>Female</option>
+              <option>Male</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="phone">Phone number</label>
+          <input type="tel" id="phone" placeholder="98xxxxxxxx">
+        </div>
+        <div class="field">
+          <label for="abhaIdReg">ABHA ID <span class="hint">(optional — you can link this later)</span></label>
+          <input type="text" id="abhaIdReg" placeholder="Leave blank if you don't have one yet">
+        </div>
+        <div class="panel">
+          <div class="row between mb-0">
+            <strong>Before we continue</strong>
+            <button class="btn btn--ghost" type="button" id="btn-listen" style="min-height:38px; padding:8px 14px; font-weight:500;">🔊 Listen</button>
+          </div>
+          <label class="row mt-1" style="align-items:flex-start; font-weight:400;">
+            <input type="checkbox" id="consentCapture" checked style="margin-top:4px;">
+            <span>I agree to share my symptoms and medical documents with this hospital for today's visit.</span>
+          </label>
+          <label class="row mt-1" style="align-items:flex-start; font-weight:400;">
+            <input type="checkbox" id="consentHIS" checked style="margin-top:4px;">
+            <span>I agree to send my summary to the hospital's record system so my doctor can see it.</span>
+          </label>
+          <label class="row mt-1" style="align-items:flex-start; font-weight:400;">
+            <input type="checkbox" id="consentAbha" checked style="margin-top:4px;">
+            <span>If I have an ABHA ID, I agree to link this visit to my ABHA health record.</span>
+          </label>
+          <p class="hint mt-1 mb-0">You can withdraw any of this consent later by asking hospital staff. Nothing is shared beyond today's visit without your say.</p>
+        </div>
+        <button class="btn btn--patient btn--lg btn--block mt-1" type="submit">Register &amp; continue</button>
+      </form>
+      <p id="patient-error" class="small mt-1" style="color:var(--alert); display:none;"></p>
+    </section>
+    <section id="panel-doctor" style="display:none;">
+      <h3>Staff sign-in</h3>
+      <form id="doctor-form" class="stack">
+        <div class="field">
+          <label for="staffEmail">Email</label>
+          <input type="email" id="staffEmail" value="dr.rao@medikiosk.example.org" required>
+        </div>
+        <div class="field mb-0">
+          <label for="staffPassword">Password</label>
+          <input type="password" id="staffPassword" value="demo123" required>
+        </div>
+        <p class="hint mb-0">Demo credentials are pre-filled — this runs against the mock backend described in the source comments.</p>
+        <button class="btn btn--primary btn--lg btn--block" type="submit">Sign in</button>
+      </form>
+      <p id="doctor-error" class="small mt-1" style="color:var(--alert); display:none;"></p>
+    </section>
+  </div>
+`;
+TEMPLATES['patient-intake'] = `
+  <div class="wrap wrap--narrow" style="padding:40px 28px 100px;">
+    <ol class="stepper" id="stepper"></ol>
+    <div id="redflag-banner"></div>
+    <section id="phase-pick">
+      <h2>What brings you in today?</h2>
+      <p>Choose the problem that's bothering you the most. You can speak your
+      answer at any point instead of tapping — look for the microphone.</p>
+      <div class="choice-grid" id="complaint-grid"></div>
+      <label class="row mt-2" style="font-weight:500;">
+        <input type="checkbox" id="ayush-toggle">
+        <span>This is an AYUSH (Ayurveda) consultation — ask a few extra questions about my constitution and daily routine</span>
+      </label>
+    </section>
+    <section id="phase-question" style="display:none;">
+      <div class="progress"><div class="progress__fill" id="progress-fill" style="width:0"></div></div>
+      <span class="section-tag" id="section-tag"></span>
+      <h2 id="question-text" style="margin-bottom:4px;"></h2>
+      <p class="small" id="question-hint"></p>
+      <div id="answer-area" class="mt-2"></div>
+      <div class="row mt-2" style="justify-content:center;">
+        <button class="mic-btn" id="mic-btn" type="button" title="Answer by voice" aria-label="Answer by voice">🎤</button>
+      </div>
+      <p class="small center" id="mic-status" style="min-height:1.2em;"></p>
+      <div class="qa-nav">
+        <button class="btn btn--ghost" id="btn-back" type="button">Back</button>
+        <button class="btn btn--patient" id="btn-next" type="button" disabled>Next</button>
+      </div>
+    </section>
+    <section id="phase-review" style="display:none;">
+      <h2>Let's check what you told us</h2>
+      <p>Tap anything you'd like to change, or continue to add your medical documents.</p>
+      <div class="sheet" id="review-sheet"></div>
+      <div class="row mt-2" style="justify-content:space-between;">
+        <button class="btn btn--ghost" id="btn-review-back" type="button">Change an answer</button>
+        <button class="btn btn--patient btn--lg" id="btn-review-continue" type="button">Continue to document scan</button>
+      </div>
+    </section>
+  </div>
+`;
+TEMPLATES['document-scan'] = `
+  <div class="wrap wrap--narrow" style="padding:40px 28px 100px;">
+    <ol class="stepper" id="stepper"></ol>
+    <h2>Do you have any prior prescriptions, lab reports, or discharge summaries?</h2>
+    <p>Photograph or upload them one at a time. We'll read each one, pull out
+    the diagnoses, medicines and results, and line them up in order for your
+    doctor — you won't need to carry them into the room.</p>
+    <label class="upload-zone" id="upload-zone" for="file-input">
+      <input type="file" id="file-input" accept="image/*,application/pdf" multiple class="visually-hidden">
+      <strong>Tap to photograph or choose a file</strong>
+      <p class="small mb-0 mt-1">JPG, PNG or PDF · you can add more than one</p>
+    </label>
+    <p class="small center mt-1">No documents handy? Try a sample to see how it works, or skip ahead.</p>
+    <div class="row" style="justify-content:center;">
+      <button class="btn btn--ghost" type="button" data-demo="prescription">+ Sample prescription</button>
+      <button class="btn btn--ghost" type="button" data-demo="lab">+ Sample lab report</button>
+      <button class="btn btn--ghost" type="button" data-demo="discharge">+ Sample discharge summary</button>
+    </div>
+    <div id="doc-list" class="mt-3"></div>
+    <div id="timeline-wrap" class="mt-3" style="display:none;">
+      <h3>Medical timeline so far</h3>
+      <div class="timeline" id="timeline"></div>
+    </div>
+    <div class="row mt-3" style="justify-content:space-between;">
+      <button class="btn btn--ghost" id="btn-skip" type="button">I have no documents — skip this step</button>
+      <button class="btn btn--patient btn--lg" id="btn-continue" type="button">Continue to summary</button>
+    </div>
+  </div>
+`;
+TEMPLATES['summary-review'] = `
+  <div class="wrap wrap--narrow" style="padding:40px 28px 100px;">
+    <ol class="stepper" id="stepper"></ol>
+    <section id="phase-generating" class="center" style="padding:48px 0;">
+      <span class="spinner" style="width:28px; height:28px; border-width:3px;"></span>
+      <h2 class="mt-2">Putting your history together</h2>
+      <p class="center" style="margin:0 auto;" id="generating-step">Structuring your answers…</p>
+    </section>
+    <section id="phase-confirm" style="display:none;">
+      <div class="row between">
+        <h2 class="mb-0">Your history, ready to review</h2>
+        <div class="lang-toggle">
+          <button type="button" class="is-active" data-lang="en">English</button>
+          <button type="button" data-lang="hi">हिन्दी</button>
+        </div>
+      </div>
+      <p>This is exactly what your doctor will see. Check it over — you can go
+      back and change anything before it's sent through.</p>
+      <div id="redflag-mount"></div>
+      <div class="sheet" id="summary-sheet"></div>
+      <label class="row mt-2" style="font-weight:500;">
+        <input type="checkbox" id="confirm-check">
+        <span>This is accurate to the best of my knowledge.</span>
+      </label>
+      <div class="row mt-2" style="justify-content:space-between;">
+        <a class="btn btn--ghost" href="#/patient-intake">Start over / edit an answer</a>
+        <button class="btn btn--patient btn--lg" id="btn-confirm" type="button" disabled>Confirm &amp; send to hospital</button>
+      </div>
+    </section>
+    <section id="phase-done" style="display:none;" class="center">
+      <span class="stamp stamp--ready" style="font-size:.85rem; padding:8px 16px;">sent</span>
+      <h2 class="mt-2">You're all set</h2>
+      <p class="center" style="margin:0 auto;">Your structured history has been sent to the hospital system<span id="abha-line"></span>. Please take a seat — you'll be called by your token number.</p>
+      <div class="panel mt-2" style="display:inline-block; padding:24px 40px;">
+        <span class="mono small">your token</span>
+        <div class="mono" style="font-size:2.2rem; font-weight:600;" id="token-display"></div>
+      </div>
+      <p class="small mt-2" id="priority-note" style="display:none; color:var(--alert);">You've been marked for priority triage — a nurse will call you shortly, ahead of your token order.</p>
+    </section>
+  </div>
+`;
+TEMPLATES['doctor-dashboard'] = `
+  <div class="wrap" style="padding:40px 28px 100px;">
+    <div class="row between">
+      <div>
+        <span class="sheet__label">step 5 · consult</span>
+        <h1 style="font-size:1.8rem; margin-top:2px;">Today's queue</h1>
+      </div>
+      <div class="row" style="align-items:center;">
+        <span class="small" id="staff-name"></span>
+        <button class="btn btn--ghost" id="btn-signout" type="button">Sign out</button>
+      </div>
+    </div>
+    <p>Patients with a completed MediKiosk history appear here the moment
+    they finish at the kiosk — flagged patients are pinned to the top,
+    regardless of when they registered.</p>
+    <div id="queue-empty" class="panel center" style="display:none;">
+      <p class="mb-0">No completed histories yet. Have a patient walk through the kiosk flow
+      from <a href="#/login?role=patient">the patient entry point</a> — they'll appear here as soon as they confirm their summary.</p>
+    </div>
+    <table class="queue" id="queue-table" style="display:none;">
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Patient</th>
+          <th>Chief complaint</th>
+          <th>Status</th>
+          <th>Ready since</th>
+        </tr>
+      </thead>
+      <tbody id="queue-body"></tbody>
+    </table>
+  </div>
+`;
+TEMPLATES['case-detail'] = `
+  <div class="wrap wrap--narrow" style="padding:40px 28px 100px;">
+    <a href="#/doctor-dashboard" class="small">← Back to queue</a>
+    <div class="row between mt-2" id="patient-header"></div>
+    <div id="redflag-mount" class="mt-2"></div>
+    <div class="row between mt-2">
+      <h3 class="mb-0">Structured history</h3>
+      <span class="small" id="generated-note"></span>
+    </div>
+    <p class="small">Every field is editable — confirm or correct anything before it's saved as the record of this visit.</p>
+    <div class="sheet" id="summary-sheet"></div>
+    <div id="timeline-section" class="mt-3" style="display:none;">
+      <h3>Digitized document timeline</h3>
+      <div class="timeline" id="timeline"></div>
+    </div>
+    <div class="row mt-3" style="justify-content:flex-end;">
+      <button class="btn btn--primary btn--lg" id="btn-confirm" type="button">Confirm &amp; save to record</button>
+    </div>
+    <p class="small mt-1" id="saved-note" style="display:none; color:var(--teal-deep);">Saved — this history is now part of the patient's record for this visit.</p>
+  </div>
+`;
+/* ================================================================
+   Page controllers (one init function per route)
+   ================================================================ */
+function initHome() {
+  renderHeader('site-header', { active: 'home' });
+  document.getElementById('site-footer').innerHTML = `
+    <div class="wrap small">
+      MediKiosk — a Smart India Hackathon prototype for PS 26047, "The Clinical History-Taking Bottleneck in Indian Hospitals." Working demo runs on mock data stored in this browser; see the API-contract comments near the top of the script for the real backend endpoints this frontend already expects.
+    </div>`;
+}
+function initLogin(params) {
+  renderHeader('site-header', { active: 'login' });
+  renderStepper('stepper', 'identify');
+  const initialRole = params.get('role') === 'doctor' ? 'doctor' : 'patient';
+  const tabPatient = document.getElementById('tab-patient');
+  const tabDoctor = document.getElementById('tab-doctor');
+  const panelPatient = document.getElementById('panel-patient');
+  const panelDoctor = document.getElementById('panel-doctor');
+  const stepperEl = document.getElementById('stepper');
+  function setRole(role) {
+    const isPatient = role === 'patient';
+    tabPatient.classList.toggle('is-active', isPatient);
+    tabDoctor.classList.toggle('is-active', !isPatient);
+    panelPatient.style.display = isPatient ? '' : 'none';
+    panelDoctor.style.display = isPatient ? 'none' : '';
+    stepperEl.style.display = isPatient ? '' : 'none';
+  }
+  tabPatient.addEventListener('click', () => setRole('patient'));
+  tabDoctor.addEventListener('click', () => setRole('doctor'));
+  setRole(initialRole);
+  const errEl = document.getElementById('patient-error');
+  function showPatientError(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
+  document.getElementById('btn-lookup').addEventListener('click', async () => {
+    const abhaId = document.getElementById('abhaId').value.trim();
+    if (!abhaId) { showPatientError('Enter an ABHA ID, or register as a new patient below.'); return; }
+    const btn = document.getElementById('btn-lookup');
+    btn.disabled = true; btn.textContent = 'Looking up…';
+    const result = await MediKioskAPI.AuthAPI.patientLookup({ abhaId });
+    btn.disabled = false; btn.textContent = 'Continue with ABHA ID';
+    if (result.exists) {
+      enterKiosk(result.patientId, document.getElementById('language').value);
+    } else {
+      showPatientError('No patient found with that ABHA ID on this demo. Try one of the sample IDs, or register as new below.');
+    }
+  });
+  document.getElementById('btn-show-register').addEventListener('click', () => {
+    document.getElementById('patient-mode-returning').style.display = 'none';
+    document.getElementById('patient-mode-register').style.display = '';
+  });
+  document.getElementById('btn-listen').addEventListener('click', () => {
+    const text = "Before we continue: do you agree to share your symptoms and medical documents with this hospital for today's visit, send your summary to the hospital's record system, and, if you have one, link this visit to your ABHA health record? You can withdraw this consent at any time by asking hospital staff.";
+    if (!('speechSynthesis' in window)) { alert(text); return; }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.95;
+    window.speechSynthesis.speak(utter);
+  });
+  document.getElementById('patient-mode-register').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('name').value.trim();
+    const age = document.getElementById('age').value.trim();
+    if (!name || !age) { showPatientError('Please fill in at least your name and age.'); return; }
+    const data = {
+      name, age: Number(age), gender: document.getElementById('gender').value,
+      phone: document.getElementById('phone').value.trim(),
+      preferredLanguage: document.getElementById('language').value,
+      abhaId: document.getElementById('abhaIdReg').value.trim() || null,
+    };
+    const submitBtn = e.target.querySelector('button[type=submit]');
+    submitBtn.disabled = true; submitBtn.textContent = 'Registering…';
+    const result = await MediKioskAPI.AuthAPI.patientRegister(data);
+    await MediKioskAPI.AuthAPI.patientConsent({
+      patientId: result.patientId,
+      consents: {
+        dataCapture: document.getElementById('consentCapture').checked,
+        sharingWithHIS: document.getElementById('consentHIS').checked,
+        abdmLink: document.getElementById('consentAbha').checked,
+      },
+    });
+    enterKiosk(result.patientId, data.preferredLanguage, result.tokenNo);
+  });
+  function enterKiosk(patientId, language, tokenNo) {
+    sessionStorage.setItem('mediKiosk_patient', JSON.stringify({ patientId, language, tokenNo }));
+    location.hash = '#/patient-intake';
+  }
+  const doctorErr = document.getElementById('doctor-error');
+  document.getElementById('doctor-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    doctorErr.style.display = 'none';
+    const email = document.getElementById('staffEmail').value.trim();
+    const password = document.getElementById('staffPassword').value;
+    const submitBtn = e.target.querySelector('button[type=submit]');
+    submitBtn.disabled = true; submitBtn.textContent = 'Signing in…';
+    const result = await MediKioskAPI.AuthAPI.staffLogin({ email, password });
+    submitBtn.disabled = false; submitBtn.textContent = 'Sign in';
+    if (!result.ok) { doctorErr.textContent = result.error || 'Sign-in failed.'; doctorErr.style.display = 'block'; return; }
+    localStorage.setItem('mediKiosk_staffToken', result.token);
+    sessionStorage.setItem('mediKiosk_staff', JSON.stringify(result.staff));
+    location.hash = '#/doctor-dashboard';
+  });
+}
+function initIntake() {
+  renderHeader('site-header', { active: 'login' });
+  renderStepper('stepper', 'converse');
+  const patientCtx = JSON.parse(sessionStorage.getItem('mediKiosk_patient') || 'null');
+  if (!patientCtx) { location.hash = '#/login?role=patient'; return; }
+  const phasePick = document.getElementById('phase-pick');
+  const phaseQuestion = document.getElementById('phase-question');
+  const phaseReview = document.getElementById('phase-review');
+  const redflagMount = document.getElementById('redflag-banner');
+  let chiefComplaintKey = null;
+  let flow = [];
+  let flatQuestions = [];
+  let answers = {};
+  let currentIndex = 0;
+  let redFlag = null;
+  const grid = document.getElementById('complaint-grid');
+  grid.innerHTML = HistoryEngine.CHIEF_COMPLAINTS.map((c) => `
+    <button type="button" class="choice" data-key="${c.key}">
+      <span class="ic">${c.icon}</span> ${c.label}
+    </button>
+  `).join('');
+  grid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.choice');
+    if (!btn) return;
+    chiefComplaintKey = btn.dataset.key;
+    const ayush = document.getElementById('ayush-toggle').checked;
+    flow = HistoryEngine.buildQuestionFlow(chiefComplaintKey, { ayush });
+    flatQuestions = [];
+    flow.forEach((section) => section.questions.forEach((q) => flatQuestions.push({ ...q, sectionKey: section.key, sectionTitle: section.title })));
+    answers = {};
+    currentIndex = 0;
+    phasePick.style.display = 'none';
+    phaseQuestion.style.display = '';
+    renderQuestion();
+  });
+  const progressFill = document.getElementById('progress-fill');
+  const sectionTag = document.getElementById('section-tag');
+  const qText = document.getElementById('question-text');
+  const qHint = document.getElementById('question-hint');
+  const answerArea = document.getElementById('answer-area');
+  const btnNext = document.getElementById('btn-next');
+  const btnBack = document.getElementById('btn-back');
+  const micBtn = document.getElementById('mic-btn');
+  const micStatus = document.getElementById('mic-status');
+  function currentQuestion() { return flatQuestions[currentIndex]; }
+  function renderQuestion() {
+    const q = currentQuestion();
+    progressFill.style.width = Math.round((currentIndex / flatQuestions.length) * 100) + '%';
+    sectionTag.textContent = q.sectionTitle;
+    qText.textContent = q.text;
+    micStatus.textContent = '';
+    micBtn.classList.remove('is-listening');
+    if (q.type === 'choice') {
+      qHint.textContent = 'Tap one, or speak your answer.';
+      answerArea.innerHTML = `<div class="choice-grid">${q.options.map((o) => `<button type="button" class="choice ${answers[q.id] === o ? 'is-selected' : ''}" data-val="${escapeAttr(o)}">${o}</button>`).join('')}</div>`;
+      answerArea.querySelectorAll('.choice').forEach((btn) => btn.addEventListener('click', () => selectChoice(q, btn.dataset.val)));
+    } else if (q.type === 'multi') {
+      qHint.textContent = 'Tap all that apply, or speak your answer.';
+      const selected = answers[q.id] || [];
+      answerArea.innerHTML = `<div class="choice-grid">${q.options.map((o) => `<button type="button" class="choice ${selected.includes(o) ? 'is-selected' : ''}" data-val="${escapeAttr(o)}">${o}</button>`).join('')}</div>`;
+      answerArea.querySelectorAll('.choice').forEach((btn) => btn.addEventListener('click', () => toggleMulti(q, btn.dataset.val)));
+    } else if (q.type === 'severity') {
+      qHint.textContent = '0 is no discomfort at all, 10 is the worst you can imagine.';
+      const chosen = answers[q.id];
+      answerArea.innerHTML = `<div class="severity">${[0,1,2,3,4,5,6,7,8,9,10].map((n) => `<button type="button" class="${String(chosen) === String(n) ? 'is-selected' : ''}" data-val="${n}">${n}</button>`).join('')}</div>`;
+      answerArea.querySelectorAll('button').forEach((btn) => btn.addEventListener('click', () => selectSeverity(q, btn.dataset.val)));
+    } else if (q.type === 'text') {
+      qHint.textContent = 'Type your answer, or speak it using the microphone.';
+      answerArea.innerHTML = `<textarea id="text-answer" placeholder="Your answer">${escapeHtml(answers[q.id] || '')}</textarea>`;
+      const ta = document.getElementById('text-answer');
+      ta.addEventListener('input', () => { answers[q.id] = ta.value; updateNextEnabled(q); });
+    }
+    updateNextEnabled(q);
+    btnBack.textContent = currentIndex === 0 ? 'Choose a different problem' : 'Back';
+  }
+  function selectChoice(q, val) { answers[q.id] = val; renderQuestion(); runRedFlagCheck(); }
+  function toggleMulti(q, val) {
+    let selected = answers[q.id] || [];
+    if (val.startsWith('None')) { selected = selected.includes(val) ? [] : [val]; }
+    else {
+      selected = selected.filter((v) => !v.startsWith('None'));
+      selected = selected.includes(val) ? selected.filter((v) => v !== val) : [...selected, val];
+    }
+    answers[q.id] = selected; renderQuestion(); runRedFlagCheck();
+  }
+  function selectSeverity(q, val) { answers[q.id] = Number(val); renderQuestion(); runRedFlagCheck(); }
+  function updateNextEnabled(q) {
+    const v = answers[q.id];
+    const ok = q.type === 'multi' ? Array.isArray(v) && v.length > 0
+      : q.type === 'severity' ? v !== undefined
+      : q.type === 'text' ? !!(v && v.trim())
+      : !!v;
+    btnNext.disabled = !ok;
+  }
+  function runRedFlagCheck() {
+    if (redFlag) return;
+    const found = HistoryEngine.checkRedFlags(chiefComplaintKey, answers);
+    if (found) { redFlag = found; renderRedFlagBanner(found); }
+  }
+  function renderRedFlagBanner(flag) {
+    redflagMount.innerHTML = `
+      <div class="alert-banner" role="alert">
+        <span aria-hidden="true">⚠</span>
+        <div>
+          <strong>Flagged for priority triage</strong>
+          <p>${flag.reason} This has been sent to the nursing station immediately — you don't need to wait for the rest of this interview to be seen.</p>
+        </div>
+      </div>`;
+  }
+  btnNext.addEventListener('click', () => {
+    if (currentIndex + 1 >= flatQuestions.length) renderReview();
+    else { currentIndex += 1; renderQuestion(); }
+  });
+  btnBack.addEventListener('click', () => {
+    if (currentIndex === 0) { phaseQuestion.style.display = 'none'; phasePick.style.display = ''; return; }
+    currentIndex -= 1; renderQuestion();
+  });
+  const TEXT_FILLERS = [
+    'It has been on and off, worse at night, and it worries me a bit.',
+    'I have had this for a while now, it comes and goes but has been more noticeable lately.',
+    'Nothing in particular, I just wanted to mention it.',
+  ];
+  micBtn.addEventListener('click', () => {
+    const q = currentQuestion();
+    micBtn.classList.add('is-listening');
+    micStatus.textContent = 'Listening…';
+    setTimeout(() => {
+      let heard;
+      if (q.type === 'choice') { heard = q.options[Math.floor(Math.random() * q.options.length)]; selectChoice(q, heard); }
+      else if (q.type === 'multi') {
+        const pool = q.options.filter((o) => !o.startsWith('None'));
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        answers[q.id] = [pick]; heard = pick; renderQuestion(); runRedFlagCheck();
+      } else if (q.type === 'severity') { heard = String(3 + Math.floor(Math.random() * 6)); selectSeverity(q, heard); }
+      else { heard = TEXT_FILLERS[Math.floor(Math.random() * TEXT_FILLERS.length)]; answers[q.id] = heard; renderQuestion(); }
+      micBtn.classList.remove('is-listening');
+      micStatus.textContent = `Heard: "${heard}"`;
+    }, 1100);
+  });
+  function renderReview() {
+    phaseQuestion.style.display = 'none';
+    phaseReview.style.display = '';
+    const sheet = document.getElementById('review-sheet');
+    const ccLabel = (HistoryEngine.CHIEF_COMPLAINTS.find((c) => c.key === chiefComplaintKey) || {}).label || 'Presenting complaint';
+    sheet.innerHTML = `<span class="sheet__label">${patientCtx.tokenNo || 'your visit'} · ${ccLabel}</span>` +
+      flow.map((section) => {
+        const rows = section.questions
+          .filter((q) => answers[q.id] !== undefined && answers[q.id] !== '')
+          .map((q) => `<dt>${q.text}</dt><dd>${formatAnswer(answers[q.id])}</dd>`)
+          .join('');
+        if (!rows) return '';
+        return `<div class="hx-section"><h4>${section.title}</h4><dl>${rows}</dl></div>`;
+      }).join('');
+  }
+  function formatAnswer(v) { return Array.isArray(v) ? v.join(', ') : String(v); }
+  document.getElementById('btn-review-back').addEventListener('click', () => {
+    phaseReview.style.display = 'none';
+    phaseQuestion.style.display = '';
+    currentIndex = flatQuestions.length - 1;
+    renderQuestion();
+  });
+  document.getElementById('btn-review-continue').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-review-continue');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const { sessionId } = await MediKioskAPI.HistoryAPI.createSession({
+      patientId: patientCtx.patientId, chiefComplaint: chiefComplaintKey, language: patientCtx.language, mode: 'touch',
+    });
+    await MediKioskAPI.HistoryAPI.saveAnswers(sessionId, answers);
+    const ccLabel = (HistoryEngine.CHIEF_COMPLAINTS.find((c) => c.key === chiefComplaintKey) || {}).label;
+    sessionStorage.setItem('mediKiosk_session', JSON.stringify({ sessionId, chiefComplaintKey, chiefComplaintLabel: ccLabel, answers, redFlag }));
+    location.hash = '#/document-scan';
+  });
+  function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+}
+function initScan() {
+  renderHeader('site-header', { active: 'login' });
+  renderStepper('stepper', 'scan');
+  const patientCtx = JSON.parse(sessionStorage.getItem('mediKiosk_patient') || 'null');
+  const sessionCtx = JSON.parse(sessionStorage.getItem('mediKiosk_session') || 'null');
+  if (!patientCtx || !sessionCtx) { location.hash = '#/login?role=patient'; return; }
+  const docList = document.getElementById('doc-list');
+  const timelineWrap = document.getElementById('timeline-wrap');
+  const timelineEl = document.getElementById('timeline');
+  const documentIds = [];
+  async function processFile(file) {
+    const cardId = 'card_' + Math.random().toString(36).slice(2, 8);
+    docList.insertAdjacentHTML('beforeend', `
+      <div class="doc-card" id="${cardId}">
+        <div class="row"><span class="spinner"></span> Reading ${escapeHtml(file.name)}…</div>
+      </div>`);
+    const result = await MediKioskAPI.DocsAPI.upload(patientCtx.patientId, file);
+    documentIds.push(result.documentId);
+    renderDoc(cardId, result.extracted, file.name);
+    await refreshTimeline();
+  }
+  function renderDoc(cardId, extracted, fileName) {
+    const card = document.getElementById(cardId);
+    const invRows = (extracted.investigations || []).map((i) =>
+      `<div class="row between mb-0"><span>${i.name}</span><span class="${i.abnormal ? 'abn' : ''}">${i.value} ${i.unit} <span class="small">(ref ${i.refRange})</span></span></div>`
+    ).join('') || '<p class="small mb-0">No lab values in this document.</p>';
+    const dx = (extracted.diagnoses || []).length ? extracted.diagnoses.map((d) => `<span class="chip">${d}</span>`).join('') : '<span class="small">None listed</span>';
+    const meds = (extracted.medications || []).length ? extracted.medications.map((m) => `<span class="chip">${m.name} ${m.dose} ${m.frequency}</span>`).join('') : '<span class="small">None listed</span>';
+    card.innerHTML = `
+      <div class="row between">
+        <strong>${extracted.docType}</strong>
+        <span class="mono small">${extracted.date}</span>
+      </div>
+      <p class="small mb-0">${extracted.provider} · digitized from ${escapeHtml(fileName)}</p>
+      <div class="mt-1"><span class="section-tag">Diagnoses</span>${dx}</div>
+      <div class="mt-1"><span class="section-tag">Medications</span>${meds}</div>
+      <div class="mt-1"><span class="section-tag">Investigations</span>${invRows}</div>
+    `;
+  }
+  async function refreshTimeline() {
+    const docs = await MediKioskAPI.DocsAPI.getTimeline(patientCtx.patientId);
+    if (!docs.length) { timelineWrap.style.display = 'none'; return; }
+    timelineWrap.style.display = '';
+    timelineEl.innerHTML = docs.map((d) => `
+      <div class="timeline__item">
+        <div class="timeline__date">${d.extracted.date}</div>
+        <div class="timeline__body">
+          <strong>${d.extracted.docType}</strong> — ${d.extracted.provider}
+          ${d.extracted.diagnoses.length ? `<div class="small mt-1">${d.extracted.diagnoses.join(', ')}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('file-input').addEventListener('change', (e) => {
+    [...e.target.files].forEach(processFile);
+    e.target.value = '';
+  });
+  const DEMO_NAMES = { prescription: 'sample-prescription.jpg', lab: 'sample-lab-report.jpg', discharge: 'sample-discharge-summary.jpg' };
+  document.querySelectorAll('[data-demo]').forEach((btn) => {
+    btn.addEventListener('click', () => processFile({ name: DEMO_NAMES[btn.dataset.demo] }));
+  });
+  ['dragover', 'dragleave', 'drop'].forEach((evt) => {
+    document.getElementById('upload-zone').addEventListener(evt, (e) => {
+      e.preventDefault();
+      document.getElementById('upload-zone').classList.toggle('is-drag', evt === 'dragover');
+      if (evt === 'drop' && e.dataTransfer.files.length) [...e.dataTransfer.files].forEach(processFile);
+    });
+  });
+  function goToSummary() {
+    sessionStorage.setItem('mediKiosk_documents', JSON.stringify(documentIds));
+    location.hash = '#/summary-review';
+  }
+  document.getElementById('btn-skip').addEventListener('click', goToSummary);
+  document.getElementById('btn-continue').addEventListener('click', goToSummary);
+  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+}
+function initSummary() {
+  renderHeader('site-header', { active: 'login' });
+  renderStepper('stepper', 'summarize');
+  const patientCtx = JSON.parse(sessionStorage.getItem('mediKiosk_patient') || 'null');
+  const sessionCtx = JSON.parse(sessionStorage.getItem('mediKiosk_session') || 'null');
+  const documentIds = JSON.parse(sessionStorage.getItem('mediKiosk_documents') || '[]');
+  if (!patientCtx || !sessionCtx) { location.hash = '#/login?role=patient'; return; }
+  const generatingStep = document.getElementById('generating-step');
+  const steps = ['Structuring your answers…', 'Reading digitized documents…', 'Checking for anything urgent…', 'Writing the summary your doctor will see…'];
+  let stepI = 0;
+  const stepTimer = setInterval(() => { stepI = (stepI + 1) % steps.length; generatingStep.textContent = steps[stepI]; }, 650);
+  let summary = null;
+  let summaryId = null;
+  let currentLang = 'en';
+  (async () => {
+    const structured = buildStructured(sessionCtx.chiefComplaintKey, sessionCtx.chiefComplaintLabel, sessionCtx.answers);
+    const result = await MediKioskAPI.SummaryAPI.generate(patientCtx.patientId, {
+      sessionId: sessionCtx.sessionId, documentIds, structured, redFlag: sessionCtx.redFlag,
+    });
+    clearInterval(stepTimer);
+    summaryId = result.summaryId;
+    summary = result.summary;
+    showConfirm();
+  })();
+  function buildStructured(ccKey, ccLabel, answers) {
+    const chronic = (answers.chronicConditions || []).filter((v) => !v.startsWith('None'));
+    const family = (answers.family || []).filter((v) => !v.startsWith('None'));
+    const habits = (answers.habits || []).filter((v) => !v.startsWith('None'));
+    const ros = (answers.rosGeneral || []).filter((v) => !v.startsWith('None'));
+    const structured = {
+      chiefComplaint: `${ccLabel}${answers.onset ? ', onset ' + answers.onset.toLowerCase() : answers.duration ? ', duration ' + answers.duration.toLowerCase() : ''}.`,
+      hpi: HistoryEngine.summarizeChiefComplaint(ccKey, answers, answers.describe),
+      pastHistory: `${chronic.length ? 'Known: ' + chronic.join(', ') + '.' : 'No chronic conditions reported.'} ${answers.surgeries ? 'Surgical/hospital history: ' + answers.surgeries + '.' : ''}`.trim(),
+      drugAllergy: `Regular medications: ${answers.medications || 'none reported'}. Allergies: ${answers.allergies || 'none reported'}.`,
+      familyHistory: family.length ? `Family history of ${family.join(', ')}.` : 'No significant family history reported.',
+      personalHistory: `${habits.length ? habits.join(', ') + '.' : 'No notable habits reported.'} ${answers.occupation ? 'Occupation: ' + answers.occupation + '.' : ''}`.trim(),
+      ros: ros.length ? ros.join(', ') + '.' : 'No additional systemic symptoms reported.',
+    };
+    if (answers.prakriti || answers.agni || answers.koshtha || answers.aharaVihara) {
+      structured.ayush = [
+        answers.prakriti ? `Prakriti: ${answers.prakriti}` : '',
+        answers.agni ? `Agni: ${answers.agni}` : '',
+        answers.koshtha ? `Koshtha: ${answers.koshtha}` : '',
+        answers.aharaVihara ? `Ahara-Vihara: ${answers.aharaVihara}` : '',
+      ].filter(Boolean).join('. ') + '.';
+    }
+    return structured;
+  }
+  function showConfirm() {
+    document.getElementById('phase-generating').style.display = 'none';
+    document.getElementById('phase-confirm').style.display = '';
+    SummaryRender.renderRedFlagNote(document.getElementById('redflag-mount'), summary.redFlag, { mode: 'patient' });
+    renderSheet();
+  }
+  function renderSheet() {
+    const sheet = document.getElementById('summary-sheet');
+    sheet.innerHTML = `<span class="sheet__label">${patientCtx.tokenNo || ''}</span>`;
+    const inner = document.createElement('div');
+    SummaryRender.renderSummarySheet(inner, summary, { lang: currentLang });
+    sheet.appendChild(inner);
+  }
+  document.querySelectorAll('.lang-toggle button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.lang-toggle button').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      currentLang = btn.dataset.lang;
+      renderSheet();
+    });
+  });
+  document.getElementById('confirm-check').addEventListener('change', (e) => {
+    document.getElementById('btn-confirm').disabled = !e.target.checked;
+  });
+  document.getElementById('btn-confirm').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-confirm');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    const result = await MediKioskAPI.SummaryAPI.confirm(summaryId, patientCtx.patientId);
+    document.getElementById('phase-confirm').style.display = 'none';
+    document.getElementById('phase-done').style.display = '';
+    document.getElementById('token-display').textContent = result.opdToken;
+    document.getElementById('abha-line').textContent = result.abhaLinked ? ' and linked to your ABHA record' : '';
+    if (summary.redFlag) document.getElementById('priority-note').style.display = 'block';
+  });
+}
+function initDashboard() {
+  renderHeader('site-header', { active: 'dashboard' });
+  const staff = JSON.parse(sessionStorage.getItem('mediKiosk_staff') || 'null');
+  const token = localStorage.getItem('mediKiosk_staffToken');
+  if (!staff || !token) { location.hash = '#/login?role=doctor'; return; }
+  document.getElementById('staff-name').textContent = `${staff.name} · ${staff.department}`;
+  document.getElementById('btn-signout').addEventListener('click', () => {
+    localStorage.removeItem('mediKiosk_staffToken');
+    sessionStorage.removeItem('mediKiosk_staff');
+    location.hash = '#/home';
+  });
+  (async () => {
+    const queue = await MediKioskAPI.QueueAPI.list();
+    sessionStorage.setItem('mediKiosk_queueCache', JSON.stringify(queue));
+    if (!queue.length) { document.getElementById('queue-empty').style.display = ''; return; }
+    document.getElementById('queue-table').style.display = '';
+    document.getElementById('queue-body').innerHTML = queue.map((item) => `
+      <tr class="${item.redFlag ? 'is-flagged' : ''}">
+        <td class="mono">${item.tokenNo || '—'}</td>
+        <td><a class="row-link" href="#/case-detail?id=${item.summaryId}">${item.name}</a><div class="small">${item.age}${(item.gender || '')[0] || ''}</div></td>
+        <td>${item.chiefComplaint}</td>
+        <td>${item.redFlag ? '<span class="stamp stamp--flag">priority</span>' : '<span class="stamp stamp--ready">ready</span>'}</td>
+        <td class="small">${timeAgo(item.generatedAt)}</td>
+      </tr>
+    `).join('');
+  })();
+  function timeAgo(iso) {
+    const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    if (mins < 1) return 'just now';
+    if (mins === 1) return '1 min ago';
+    return `${mins} min ago`;
+  }
+}
+function initCaseDetail(params) {
+  renderHeader('site-header', { active: 'dashboard' });
+  const staff = JSON.parse(sessionStorage.getItem('mediKiosk_staff') || 'null');
+  if (!staff || !localStorage.getItem('mediKiosk_staffToken')) { location.hash = '#/login?role=doctor'; return; }
+  const summaryId = params.get('id');
+  const queueCache = JSON.parse(sessionStorage.getItem('mediKiosk_queueCache') || '[]');
+  const queueItem = queueCache.find((q) => q.summaryId === summaryId);
+  if (!summaryId) { location.hash = '#/doctor-dashboard'; return; }
+  (async () => {
+    const summary = await MediKioskAPI.SummaryAPI.get(summaryId);
+    if (!summary) {
+      document.querySelector('#app').insertAdjacentHTML('beforeend', '<p class="wrap wrap--narrow">This case could not be found — it may have been generated in a different browser session.</p>');
+      return;
+    }
+    document.getElementById('patient-header').innerHTML = `
+      <div>
+        <h2 class="mb-0">${queueItem ? queueItem.name : 'Patient ' + summary.patientId}</h2>
+        <span class="small">${queueItem ? `${queueItem.age}, ${queueItem.gender} · Token ${queueItem.tokenNo || '—'}` : ''}</span>
+      </div>
+      ${summary.redFlag ? '<span class="stamp stamp--flag">priority</span>' : '<span class="stamp stamp--ready">ready</span>'}
+    `;
+    SummaryRender.renderRedFlagNote(document.getElementById('redflag-mount'), summary.redFlag, { mode: 'doctor' });
+    document.getElementById('generated-note').textContent = summary.generatedAt ? `Generated ${new Date(summary.generatedAt).toLocaleTimeString()}` : '';
+    const sheet = document.getElementById('summary-sheet');
+    SummaryRender.renderSummarySheet(sheet, summary, { editable: true });
+    if (summary.patientId) {
+      const docs = await MediKioskAPI.DocsAPI.getTimeline(summary.patientId);
+      if (docs.length) {
+        document.getElementById('timeline-section').style.display = '';
+        document.getElementById('timeline').innerHTML = docs.map((d) => `
+          <div class="timeline__item">
+            <div class="timeline__date">${d.extracted.date}</div>
+            <div class="timeline__body">
+              <strong>${d.extracted.docType}</strong> — ${d.extracted.provider}
+              ${d.extracted.diagnoses.length ? `<div class="small mt-1">${d.extracted.diagnoses.join(', ')}</div>` : ''}
+              ${d.extracted.investigations.filter((i) => i.abnormal).length ? `<div class="small abn mt-1">Abnormal: ${d.extracted.investigations.filter((i) => i.abnormal).map((i) => `${i.name} ${i.value}${i.unit}`).join(', ')}</div>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+    document.getElementById('btn-confirm').addEventListener('click', async () => {
+      const edits = {};
+      sheet.querySelectorAll('textarea[data-field]').forEach((ta) => { edits[ta.dataset.field] = ta.value; });
+      const btn = document.getElementById('btn-confirm');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      await MediKioskAPI.SummaryAPI.doctorUpdate(summaryId, edits);
+      btn.textContent = 'Confirmed ✓';
+      document.getElementById('saved-note').style.display = 'block';
+    });
+  })();
+}
+/* ================================================================
+   Router
+   ================================================================ */
+const INITS = {
+  home: initHome,
+  login: initLogin,
+  'patient-intake': initIntake,
+  'document-scan': initScan,
+  'summary-review': initSummary,
+  'doctor-dashboard': initDashboard,
+  'case-detail': initCaseDetail,
+};
+function parseHash() {
+  let h = location.hash || '';
+  h = h.replace(/^#\/?/, '');
+  const qIdx = h.indexOf('?');
+  const route = qIdx === -1 ? h : h.slice(0, qIdx);
+  const qs = qIdx === -1 ? '' : h.slice(qIdx + 1);
+  return { route: route || 'home', params: new URLSearchParams(qs) };
+}
+function renderRoute() {
+  const { route, params } = parseHash();
+  const key = TEMPLATES[route] ? route : 'home';
+  document.getElementById('app').innerHTML = TEMPLATES[key];
+  document.getElementById('site-footer').innerHTML = '';
+  (INITS[key] || initHome)(params);
+  window.scrollTo(0, 0);
+}
+/* ================================================================
+   TECH STACK MODAL
+   ================================================================ */
+
+function openTechStack() {
+
+  let modal = document.getElementById('techStackModal');
+
+  /*
+   * Create the modal only once.
+   */
+  if (!modal) {
+
+    modal = document.createElement('div');
+
+    modal.id = 'techStackModal';
+
+    modal.className = 'tech-stack-overlay';
+
+    modal.innerHTML = `
+
+      <div class="tech-stack-modal">
+
+        <div class="tech-stack-header">
+
+          <div>
+
+            <div class="tech-stack-label">
+              MEDIKIOSK
+            </div>
+
+            <h2>
+              Technology Stack
+            </h2>
+
+            <p>
+              Technologies and application components used
+              to build MediKiosk.
+            </p>
+
+          </div>
+
+          <button
+            class="tech-stack-close"
+            type="button"
+            onclick="closeTechStack()"
+            aria-label="Close"
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <div class="tech-stack-content">
+
+
+          <!-- FRONTEND -->
+
+          <section class="tech-category">
+
+            <div class="tech-category-title">
+
+              <span class="tech-icon">
+                ◈
+              </span>
+
+              <div>
+
+                <h3>
+                  Frontend
+                </h3>
+
+                <p>
+                  User interface and responsive experience
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="tech-grid">
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  HTML
+                </div>
+
+                <div>
+
+                  <h4>
+                    HTML5
+                  </h4>
+
+                  <p>
+                    Application structure and semantic
+                    page layout.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  CSS
+                </div>
+
+                <div>
+
+                  <h4>
+                    CSS3
+                  </h4>
+
+                  <p>
+                    Responsive layout, styling, animations
+                    and visual design.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  JS
+                </div>
+
+                <div>
+
+                  <h4>
+                    JavaScript
+                  </h4>
+
+                  <p>
+                    Application logic, navigation,
+                    interactions and data flow.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  UI
+                </div>
+
+                <div>
+
+                  <h4>
+                    Responsive Design
+                  </h4>
+
+                  <p>
+                    Interface designed for different
+                    screen sizes.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+
+          <!-- BROWSER & WEB APIs -->
+
+          <section class="tech-category">
+
+            <div class="tech-category-title">
+
+              <span class="tech-icon">
+                ⌁
+              </span>
+
+              <div>
+
+                <h3>
+                  Browser & Web APIs
+                </h3>
+
+                <p>
+                  Browser capabilities used by the application
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="tech-grid">
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  🎙
+                </div>
+
+                <div>
+
+                  <h4>
+                    Web Speech API
+                  </h4>
+
+                  <p>
+                    Voice interaction and speech-based input.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  📁
+                </div>
+
+                <div>
+
+                  <h4>
+                    File Upload API
+                  </h4>
+
+                  <p>
+                    Patient document and medical-file
+                    upload handling.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  #
+                </div>
+
+                <div>
+
+                  <h4>
+                    Hash Routing
+                  </h4>
+
+                  <p>
+                    Client-side navigation between
+                    application screens.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+
+          <!-- APPLICATION ARCHITECTURE -->
+
+          <section class="tech-category">
+
+            <div class="tech-category-title">
+
+              <span class="tech-icon">
+                ⬡
+              </span>
+
+              <div>
+
+                <h3>
+                  Application Architecture
+                </h3>
+
+                <p>
+                  Core systems implemented inside MediKiosk
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="architecture-grid">
+
+
+              <div class="architecture-card">
+
+                <span>
+                  01
+                </span>
+
+                <h4>
+                  History Engine
+                </h4>
+
+                <p>
+                  Collects and structures patient
+                  information during the consultation.
+                </p>
+
+              </div>
+
+
+              <div class="architecture-card">
+
+                <span>
+                  02
+                </span>
+
+                <h4>
+                  Adaptive Interview Engine
+                </h4>
+
+                <p>
+                  Uses patient responses to guide
+                  the next questions.
+                </p>
+
+              </div>
+
+
+              <div class="architecture-card">
+
+                <span>
+                  03
+                </span>
+
+                <h4>
+                  Red-Flag Detection
+                </h4>
+
+                <p>
+                  Identifies predefined warning signs
+                  and helps prioritize cases.
+                </p>
+
+              </div>
+
+
+              <div class="architecture-card">
+
+                <span>
+                  04
+                </span>
+
+                <h4>
+                  Document Processing
+                </h4>
+
+                <p>
+                  Handles uploaded patient documents
+                  within the application.
+                </p>
+
+              </div>
+
+
+              <div class="architecture-card">
+
+                <span>
+                  05
+                </span>
+
+                <h4>
+                  Structured Summary
+                </h4>
+
+                <p>
+                  Converts collected information into
+                  a structured clinical summary.
+                </p>
+
+              </div>
+
+
+              <div class="architecture-card">
+
+                <span>
+                  06
+                </span>
+
+                <h4>
+                  Doctor Queue
+                </h4>
+
+                <p>
+                  Organizes patients and helps doctors
+                  review cases efficiently.
+                </p>
+
+              </div>
+
+
+            </div>
+
+          </section>
+
+
+
+          <!-- DATA LAYER -->
+
+          <section class="tech-category">
+
+            <div class="tech-category-title">
+
+              <span class="tech-icon">
+                ◇
+              </span>
+
+              <div>
+
+                <h3>
+                  Application Data Layer
+                </h3>
+
+                <p>
+                  Prototype-level data and API architecture
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="tech-grid">
+
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  API
+                </div>
+
+                <div>
+
+                  <h4>
+                    Mock API Layer
+                  </h4>
+
+                  <p>
+                    Simulates authentication, history,
+                    documents, summaries and queue services.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="tech-card">
+
+                <div class="tech-card-icon">
+                  DATA
+                </div>
+
+                <div>
+
+                  <h4>
+                    In-App Data Handling
+                  </h4>
+
+                  <p>
+                    Prototype data structures are handled
+                    directly by JavaScript.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+            </div>
+
+          </section>
+
+
+
+          <!-- SYSTEM FLOW -->
+
+          <section class="tech-category">
+
+            <div class="tech-category-title">
+
+              <span class="tech-icon">
+                →
+              </span>
+
+              <div>
+
+                <h3>
+                  System Flow
+                </h3>
+
+                <p>
+                  How the major components work together
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="system-flow">
+
+              <div class="flow-item">
+                <span>01</span>
+                <strong>Patient</strong>
+              </div>
+
+              <div class="flow-arrow">→</div>
+
+              <div class="flow-item">
+                <span>02</span>
+                <strong>Patient Kiosk</strong>
+              </div>
+
+              <div class="flow-arrow">→</div>
+
+              <div class="flow-item">
+                <span>03</span>
+                <strong>Adaptive Interview</strong>
+              </div>
+
+              <div class="flow-arrow">→</div>
+
+              <div class="flow-item">
+                <span>04</span>
+                <strong>History Engine</strong>
+              </div>
+
+              <div class="flow-arrow">→</div>
+
+              <div class="flow-item">
+                <span>05</span>
+                <strong>Summary & Triage</strong>
+              </div>
+
+              <div class="flow-arrow">→</div>
+
+              <div class="flow-item">
+                <span>06</span>
+                <strong>Doctor Dashboard</strong>
+              </div>
+
+            </div>
+
+          </section>
+
+
+        </div>
+
+
+        <div class="tech-stack-footer">
+
+          <span>MEDIKIOSK</span>
+
+          <span>•</span>
+
+          <span>
+            Healthcare workflow prototype
+          </span>
+
+        </div>
+
+      </div>
+
+    `;
+
+    /*
+     * Close when clicking the dark background.
+     */
+
+    modal.addEventListener('click', function(event) {
+
+      if (event.target === modal) {
+        closeTechStack();
+      }
+
+    });
+
+    document.body.appendChild(modal);
+
+  }
+
+
+  modal.classList.add('active');
+
+  document.body.style.overflow = 'hidden';
+
+}
+
+
+function closeTechStack() {
+
+  const modal =
+    document.getElementById('techStackModal');
+
+  if (!modal) return;
+
+  modal.classList.remove('active');
+
+  document.body.style.overflow = '';
+
+}
+
+
+document.addEventListener('keydown', function(event) {
+
+  if (event.key === 'Escape') {
+
+    closeTechStack();
+
+  }
+
+});
+
+window.addEventListener('hashchange', renderRoute);
+renderRoute();
+</script>
+</body>
+</html>
