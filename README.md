@@ -235,6 +235,42 @@ Collected information is organized into a structured summary containing sections
 ---
 
 
+---
+
+## 🚧 Current Prototype Status
+
+This repository contains a functional prototype demonstrating the MediKiosk patient intake and clinical history workflow.
+
+The current implementation uses a mock backend and prototype data for demonstration purposes.
+
+It is intended for hackathon and prototype demonstration and is **not a production medical system**.
+
+---
+
+## 🔮 Future Scope
+
+Potential future development areas include:
+
+- Integration with real clinical information systems
+- Secure healthcare data storage
+- Real authentication and authorization
+- Integration with verified health-data standards
+- Improved multilingual and voice interaction
+- Advanced clinical decision-support capabilities
+- Real-time hospital/OPD integration
+- Deployment with appropriate healthcare security and privacy controls
+
+---
+
+## ⚠️ Disclaimer
+
+MediKiosk AI is a prototype developed for demonstration and hackathon purposes.
+
+It does not provide medical diagnosis or replace a qualified healthcare professional. Any clinical information shown in the prototype is intended for demonstration only.
+
+---
+
+
 
 🏗️ Prototype Architecture
 
